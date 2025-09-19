@@ -1,16 +1,1 @@
-<!doctype html>
-<meta charset="utf-8">
-<title>Redirigiendo…</title>
-<script>
-  // Si alguien entra a /paneloro/globo -> mandalo a /paneloro/games/globo.html
-  const segs = location.pathname.split('/').filter(Boolean);
-  // buscamos el último segmento (p.ej. "globo" en /paneloro/globo)
-  const last = segs[segs.length - 1] || '';
-  const juegos = ['globo','dados','ruleta','minas','trivia','cartas','mom'];
 
-  if (segs[0] === 'paneloro' && juegos.includes(last)) {
-    location.replace('/paneloro/games/' + last + '.html' + location.search + location.hash);
-  } else {
-    location.replace('/paneloro/');
-  }
-</script>
