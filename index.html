@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <base href="./">
+  <script>
+// Prefijo dinámico: en GitHub usa /paneloro/, en local usa ./
+const PREFIX = location.hostname.endsWith('github.io') ? '/paneloro/' : './';
+</script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
   // === SUPABASE CONFIG ===
@@ -456,13 +459,13 @@ async function sbRefreshUser(username){
 
 const DEFAULT_STATE = {
   games: [
-    {slug:'ruleta', icon:'🎯',  name:'Ruleta',         url:'ruleta.html'},
-    {slug:'globo',  icon:'🎈',  name:'Globo',          url:'globo.html'},
-    {slug:'minas',  icon:'💣',  name:'Minas',          url:'minas.html'},
-    {slug:'dados',  icon:'🎲',  name:'Dados',          url:'dados.html'},
-    {slug:'trivia', icon:'❓',  name:'Trivia',         url:'trivia.html'},
-    {slug:'cartas', icon:'🃏',  name:'Cartas',         url:'cartas.html'},
-    {slug:'mom',    icon:'↕️',  name:'Mayor o Menor',  url:'mom.html'}
+    {slug:'ruleta', icon:'🎯',  name:'Ruleta',         url: PREFIX + 'ruleta.html'},
+    {slug:'globo',  icon:'🎈',  name:'Globo',          url: PREFIX + 'globo.html'},
+    {slug:'minas',  icon:'💣',  name:'Minas',          url: PREFIX + 'minas.html'},
+    {slug:'dados',  icon:'🎲',  name:'Dados',          url: PREFIX + 'dados.html'},
+    {slug:'trivia', icon:'❓',  name:'Trivia',         url: PREFIX + 'trivia.html'},
+    {slug:'cartas', icon:'🃏',  name:'Cartas',         url: PREFIX + 'cartas.html'},
+    {slug:'mom',    icon:'↕️',  name:'Mayor o Menor',  url: PREFIX + 'mom.html'}
   ],
   users: { 'demo': { password:'demo', blocked:false, shots:3, history:[] } },
   sessions: { currentUser: null },
