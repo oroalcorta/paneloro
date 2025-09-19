@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+  // === SUPABASE CONFIG ===
+  const SUPABASE_URL = "https://uuqwxvsrwmqhrprgxjjx.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1cXd4dnNyd21xaHJwcmd4amp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyMjAwMjcsImV4cCI6MjA3Mzc5NjAyN30.aZZrmHq14F3uXncmxkk7_29oe0xaSmqzRld5rCjjlPs";
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>RED ORO · Panel</title>
+<style>
+  :root{
+    --bg:#0b0b0f; --card:#14141c; --muted:#a6adbb; --accent:#d4af37; --accent2:#f8e48a;
+    --line:#ffffff1a; --ok:#22c55e; --danger:#ef4444; --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+  margin:0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu,
+               "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
+               sans-serif;
+  background:var(--bg);
+  color:#fff;
+}
+  a{color:inherit}
+  .wrap{max-width:1040px;margin:0 auto;padding:18px 16px 110px}
+  header{position:sticky;top:0;background:linear-gradient(180deg,rgba(11,11,15,.97),rgba(11,11,15,.70));backdrop-filter:blur(6px);z-index:10}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:14px 4px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:38px;height:38px;border-radius:12px;background:
+        radial-gradient(120% 120% at 20% 15%,#2a2a40,#0f0f18);
+        border:1px solid #ffffff26; position:relative; box-shadow:inset 0 0 20px #0006}
+  .logo:after{content:"G";position:absolute;inset:0;display:grid;place-items:center;font-weight:900;color:var(--accent)}
+  .h1{font-weight:900;letter-spacing:.2px}
+  .btn{display:inline-grid;place-items:center;border-radius:12px;border:1px solid #ffffff26;background:#ffffff12;color:#fff;padding:10px 14px;cursor:pointer;transition:.15s transform}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:linear-gradient(180deg,var(--accent),var(--accent2));color:#111;font-weight:800;border:none}
+  .btn-danger{border-color:#7f1d1d;color:#fecaca;background:#2a0d0d}
+  .btn-sm{padding:7px 10px;border-radius:10px;font-size:13px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (min-width:780px){ .grid{grid-template-columns:1fr 1fr 1fr} }
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+  .card h3{margin:4px 0 0 0;font-size:16px;letter-spacing:.2px}
+  .badge{font-size:12px;color:var(--muted)}
+  .muted{color:var(--muted)}
+  .section{margin:16px 0}
+  .hidden{display:none !important}
+  input{padding:12px;border-radius:12px;border:1px solid #ffffff26;background:#0f1016;color:#fff;width:100%}
+  label{font-size:12px;color:var(--muted)}
+  .stack{display:flex;flex-direction:column;gap:12px}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .table{width:100%;border-collapse:collapse}
+  .table th,.table td{border-bottom:1px solid #ffffff14;padding:10px 8px;text-align:left;vertical-align:middle}
+  .chip{padding:2px 8px;border-radius:999px;border:1px solid #ffffff2a;font-size:12px}
+  .chip.ok{border-color:#134e4a;color:#34d399;background:#052e24}
+  .chip.blocked{border-color:#4c1d1d;color:#fca5a5;background:#2a0d0d}
+  .pill{padding:6px 10px;border-radius:999px;border:1px solid #ffffff22;background:#11131a}
+  footer{margin-top:40px;text-align:center;color:#9da3af}
+
+  /* Login centrado */
+  #view-login .section.stack{align-items:center}
+  #view-login .login-card{width:100%;max-width:460px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+  #view-login .login-card .stack{align-items:stretch}
+  #view-login h2{text-align:center;letter-spacing:.5px}
+
+  /* Gameframe */
+  .gameframe{position:fixed;inset:0;background:#000;display:none;flex-direction:column;z-index:70}
+  .gameframe.show{display:flex}
+  .gamebar{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#0f0f16;border-bottom:1px solid #222}
+  .frame{flex:1}
+  .frame iframe{border:0;width:100%;height:100%}
+
+  /* Acciones tabla: una línea y compacto */
+  .actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+  .qty{width:60px;padding:8px;border-radius:10px}
+
+  /* Modal genérico (resultado) */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;z-index:90}
+  .dialog{width:min(92vw,520px);background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow);text-align:center}
+  .dialog h3{margin:4px 0 6px 0}
+  /* pegalo en tu <style> */
+/* mini icono con emoji nativo */
+.thumb{
+  width:60px; height:60px;
+  border-radius:14px; border:1px solid #ffffff22;
+  background:linear-gradient(180deg,#0f1118,#0a0b10);
+  display:grid; place-items:center;
+  box-shadow:inset 0 6px 16px #0008;
+  font-size:34px;           /* tamaño del emoji */
+  line-height:1;            /* que no empuje el layout */
+}
+/* --- Admin: crear usuario compacto --- */
+.admin-form .input-sm{
+  width: clamp(140px, 22vw, 220px);
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 10px;
+}
+.admin-form .btn-sm-wide{
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+/* Buscador de usuarios arriba de la tabla */
+#usersSearchRow{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:8px 0 10px 0;
+}
+#userFilter{
+  width: clamp(180px, 30vw, 260px);
+  padding:10px; border-radius:10px; font-size:14px;
+}
+.badge-muted{ font-size:12px; color:var(--muted); }
+/* pegalo al final del <style> */
+.chip.admin{ border-color:#1f2937; color:#93c5fd; background:#0b1220 }
+.pill.infty{ font-weight:700; }
+/* Tema dorado cuando brand=oro */
+body[data-brand="oro"]{
+  --accent:#f5d142;
+  --accent2:#fff4a8;
+}
+
+/* Cambia la letra del logo: G -> O en ORO */
+body[data-brand="oro"] .logo:after{ content:"O"; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="view-login" class="wrap">
+  <header>
+    <div class="top">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <div class="h1">RED ORO</div>
+          <div class="muted" style="font-size:12px">Acceso a juegos</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="section stack">
+    <div class="login-card">
+      <h2>INGRESAR</h2>
+      <div class="stack">
+        <div><label>Usuario</label><input id="loginUser" autocomplete="username" /></div>
+        <div><label>Contraseña</label><input id="loginPass" type="password" autocomplete="current-password" /></div>
+        <button class="btn btn-primary" id="btnLogin">Entrar</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>© RED ORO — todos los derechos reservados</footer>
+</div>
+
+<!-- DASHBOARD JUGADOR -->
+<div id="view-dashboard" class="wrap hidden">
+  <header>
+    <div class="top">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <div class="h1">RED ORO</div>
+          <div class="muted" style="font-size:12px">Juegos</div>
+        </div>
+      </div>
+      <div class="row" style="gap:8px;align-items:center">
+        <div class="pill">Tiros: <b id="shotsGeneral">0</b></div>
+        <button class="btn" id="btnHistorial">Historial</button>
+        <button class="btn" id="btnLogout">Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="section">
+    <div class="grid" id="gamesGrid"></div>
+  </div>
+
+  <footer>© RED ORO — todos los derechos reservados</footer>
+</div>
+
+<!-- ADMIN -->
+<div id="view-admin" class="wrap hidden">
+  <header>
+    <div class="top">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <div class="h1">RED ORO</div>
+          <div class="muted" style="font-size:12px">Admin</div>
+        </div>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnBackFromAdmin">Volver</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Crear usuario (compacto) -->
+  <div class="section stack">
+    <h3>Crear usuario</h3>
+    <div class="row admin-form">
+      <input id="newUser" class="input-sm" placeholder="usuario" />
+      <input id="newPass" class="input-sm" placeholder="contraseña" />
+      <button class="btn btn-primary btn-sm-wide" id="btnCreateUser">Crear</button>
+    </div>
+  </div>
+
+  <!-- Estadísticas arriba -->
+  <div class="section stack" id="adminStatsSection">
+    <h3>Estadísticas de admin</h3>
+    <div class="row">
+      <div class="pill">Cargas totales: <b id="statUp">0</b></div>
+      <div class="pill">Descargas totales: <b id="statDown">0</b></div>
+      <div class="pill">Tiros en circulación: <b id="statCirculation">0</b></div>
+    </div>
+  </div>
+
+  <!-- Historial total arriba -->
+  <div class="section stack">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h3 style="margin:0">Historial total</h3>
+      <button class="btn" id="toggleAdminHistory">Ver historial total</button>
+    </div>
+    <div id="adminHistoryWrap" class="stack hidden">
+      <div id="adminHistory" class="stack"></div>
+    </div>
+  </div>
+
+  <!-- Usuarios + buscador -->
+  <div class="section">
+    <div class="row" id="usersSearchRow">
+      <h3 style="margin:0">Usuarios</h3>
+      <input id="userFilter" placeholder="buscar usuario..." />
+      <span id="usersCount" class="badge-muted"></span>
+    </div>
+
+    <table class="table" id="usersTable">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Tiros</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <footer>© RED ORO — todos los derechos reservados</footer>
+</div>
+
+<!-- GAME FRAME -->
+<div class="gameframe" id="gameFrame">
+  <div class="gamebar">
+    <div class="row"><b id="gfTitle">Juego</b></div>
+    <div class="row"></div>
+  </div>
+  <div class="frame"><iframe id="iframeGame" src="about:blank" allow="fullscreen; accelerometer; gyroscope"></iframe></div>
+</div>
+
+<script>
+/* ===== Utils ===== */
+const qs  = s => document.querySelector(s);
+const qsa = s => Array.from(document.querySelectorAll(s));
+const now = () => Date.now();
+const fmt = ts => new Date(ts).toLocaleString();
+let gameEnding = false; // evita dobles finales y sirve para el delay
+/* Modal centrado para mensajes */
+function showDialog(message){
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.innerHTML = `
+    <div class="dialog">
+      <h3>Resultado</h3>
+      <p class="muted" style="margin:6px 0 14px 0">${message}</p>
+      <button class="btn btn-primary" id="dlgOk">OK</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#dlgOk').addEventListener('click', ()=> overlay.remove());
+}
+// Buscar usuario por username (lo usan play(), historial, admin, etc.)
+async function sbGetUserByName(username){
+  log('sbGetUserByName>', { username, BRAND });
+  const { data, error } = await sb
+    .from('users')
+    .select('*')
+    .eq('username', username)
+    .eq('brand', BRAND)
+    .maybeSingle();
+  if (error){ log('sbGetUserByName<ERROR', error); throw error; }
+  log('sbGetUserByName<DATA', data);
+  return data;
+}
+
+async function sbGetUserByCreds(username, passHash){
+  log('sbGetUserByCreds>', { username, passHash, BRAND });
+  const { data, error } = await sb
+    .from('users')
+    .select('*')
+    .eq('username', username)
+    .eq('password_hash', passHash)
+    .eq('brand', BRAND)
+    .maybeSingle();
+  if (error){ log('sbGetUserByCreds<ERROR', error); throw error; }
+  log('sbGetUserByCreds<DATA', data);
+  return data;
+}
+// --- FIN DE JUEGO: idempotente y siempre vuelve en 2s ---
+let finishingTimer = null;
+function finishGame({ game='-', value=0, label='' } = {}){
+  // evita dobles finales y toques raros
+  if (gameEnding) return;
+  gameEnding = true;
+
+  // Programo salida forzada en 2s aunque el usuario toque lo que toque
+  clearTimeout(finishingTimer);
+  finishingTimer = setTimeout(()=>{
+    closeGameFrame();
+    show('view-dashboard');
+    const v = parseInt(value||0,10);
+    const msg = v>0 ? `🎉 Premio: $${v}` : `🎉 ${label || 'SIN PREMIO'}`;
+    showDialog(msg + ' — reclamá por WhatsApp');
+    // listo para una próxima partida
+    setTimeout(()=>{ gameEnding = false; }, 100);
+  }, 2000);
+}
+// ====== MULTI-RED ======
+function getBrandFromURL(){
+  const q = new URLSearchParams(location.search);
+  const b = (q.get('brand') || localStorage.getItem('last_brand') || 'oro').toLowerCase();
+  return b;
+}
+const BRAND = getBrandFromURL();
+document.body.dataset.brand = BRAND;
+localStorage.setItem('last_brand', BRAND);
+// aplica estilos por brand en el CSS
+document.body.dataset.brand = BRAND;
+localStorage.setItem('last_brand', BRAND);
+const LS_KEY = `panel_${BRAND}_v5`;
+
+// ===== DEBUG =====
+const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
+const log = (...a)=>{ if (DEBUG) console.log('[DBG]', ...a); };
+
+// banner visual si debug
+if (DEBUG) {
+  const bar = document.createElement('div');
+  bar.style.cssText = 'position:fixed;inset:auto 0 0 0;background:#111827;color:#9ca3af;font:12px/1.3 monospace;padding:6px 10px;z-index:9999;border-top:1px solid #334155';
+  bar.textContent = `DEBUG ON · BRAND=${BRAND} · LS.last_brand=${localStorage.getItem('last_brand')||'-'}`;
+  document.addEventListener('DOMContentLoaded', ()=>document.body.appendChild(bar));
+}
+// errores globales
+window.addEventListener('error',   e=>{ if(DEBUG) console.error('[DBG] onerror', e.message, e.error); });
+window.addEventListener('unhandledrejection', e=>{ if(DEBUG) console.error('[DBG] unhandledrejection', e.reason); });
+/* ====== DB Helpers (Supabase) ====== */
+
+
+async function sbCreateUser(username, passHash){
+  const { data, error } = await sb.from('users')
+    .insert({ username, password_hash: passHash, brand: BRAND })
+    .select('*').single();
+  if(error) throw error;
+  await sb.from('events').insert({ user_id: data.id, type: 'user_created', admin_user: 'admin' /* brand lo pone el trigger */});
+  return data;
+}
+
+async function sbEnsureUser(username, passHash){
+  let u = await sbGetUserByName(username);
+  if(!u){
+    u = await sbCreateUser(username, passHash);
+  }
+  return u;
+}
+
+async function sbListUsers(){
+  const { data, error } = await sb.from('users')
+    .select('id, username, shots, blocked')
+    .eq('brand', BRAND)
+    .order('username', { ascending:true });
+  if(error) throw error;
+  return data;
+}
+
+async function sbDeltaShots(userId, qty, admin='admin'){
+  const { error } = await sb.from('events').insert({
+    user_id: userId,
+    type: qty>=0 ? 'shots_load' : 'shots_unload',
+    delta_shots: qty,
+    admin_user: admin
+  });
+  if(error) throw error;
+}
+
+async function sbSetBlocked(userId, blocked, admin='admin'){
+  const { error: e1 } = await sb.from('users').update({ blocked }).eq('id', userId);
+  if(e1) throw e1;
+  const { error: e2 } = await sb.from('events').insert({
+    user_id: userId,
+    type: blocked ? 'user_blocked' : 'user_unblocked',
+    admin_user: admin
+  });
+  if(e2) throw e2;
+}
+
+async function sbDeleteUser(userId){
+  // log del evento antes de borrar (o después con on delete cascade)
+  await sb.from('events').insert({ user_id:userId, type:'user_deleted', admin_user:'admin' });
+  const { error } = await sb.from('users').delete().eq('id', userId);
+  if(error) throw error;
+}
+
+async function sbPlay(userId, gameSlug){
+  const { error } = await sb.from('events').insert({
+    user_id: userId, type: 'play', game_slug: gameSlug, delta_shots: -1
+  });
+  if(error) throw error;
+}
+
+async function sbPrize(userId, gameSlug, value, label=''){
+  const { error } = await sb.from('events').insert({
+    user_id: userId, type: 'prize', game_slug: gameSlug, prize: value, label
+  });
+  if(error) throw error;
+}
+
+async function sbAdminHistory(limit=150){
+  const { data, error } = await sb
+    .from('events')
+    .select(`ts, type, game_slug, delta_shots, prize, label, users!inner(username)`)
+    .eq('brand', BRAND)
+    .order('ts', { ascending:false })
+    .limit(limit);
+  if(error) throw error;
+  return data;
+}
+
+async function sbRefreshUser(username){
+  const { data, error } = await sb.from('users')
+    .select('*')
+    .eq('username', username)
+    .eq('brand', BRAND)       // <— agregar
+    .single();
+  if(error) throw error;
+  return data;
+}
+/* ===== Estado (Local) ===== */
+/* ===== ICONOS EMBEBIDOS (data:svg) – sin Internet ===== */
+
+const DEFAULT_STATE = {
+  games: [
+    {slug:'ruleta', icon:'🎯',  name:'Ruleta',         url:'games/ruleta.html'},
+    {slug:'globo',  icon:'🎈',  name:'Globo',          url:'games/globo.html'},
+    {slug:'minas',  icon:'💣',  name:'Minas',          url:'games/minas.html'},
+    {slug:'dados',  icon:'🎲',  name:'Dados',          url:'games/dados.html'},
+    {slug:'trivia', icon:'❓',  name:'Trivia',         url:'games/trivia.html'},
+    {slug:'cartas', icon:'🃏',  name:'Cartas',         url:'games/cartas.html'},
+    {slug:'mom',    icon:'↕️',  name:'Mayor o Menor',  url:'games/mom.html'}
+  ],
+  users: { 'demo': { password:'demo', blocked:false, shots:3, history:[] } },
+  sessions: { currentUser: null },
+  adminStats: { up:0, down:0 }
+};
+
+function R(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'null')||DEFAULT_STATE }catch(e){ return DEFAULT_STATE } }
+function W(s){ localStorage.setItem(LS_KEY, JSON.stringify(s)) }
+let state = R();
+let userFilter = '';
+let uid2name = {};
+function cur(){ const k=state.sessions.currentUser; return k? state.users[k]:null }
+
+/* ===== ADMIN ===== */
+function userStats(info){
+  let g=0,p=0,last=null;
+  (info.history||[]).forEach(ev=>{ if(ev.type==='premio'){ last=ev; const v=+ev.prize||0; if(v>0) g++; else p++; }});
+  return {g,p,last};
+}
+function renderUsersTable(){
+  const tb = qs('#usersTable tbody'); 
+  tb.innerHTML = '';
+
+  const entries = Object.entries(state.users)
+    .filter(([u]) => u.toLowerCase().includes((userFilter||'').toLowerCase()));
+
+  const countEl = qs('#usersCount');
+  if (countEl) countEl.textContent = entries.length ? `${entries.length} resultado(s)` : 'sin resultados';
+
+  if (!entries.length){
+    tb.innerHTML = `<tr><td colspan="4" class="muted">No se encontraron usuarios.</td></tr>`;
+    return;
+  }
+
+  entries.forEach(([u,info])=>{
+    const isSelfAdmin = (u === (state.sessions.currentUser || ''));
+
+    // celdas comunes
+    const userCell  = `<td style="font-weight:700">${u}</td>`;
+    const shotsCell = `<td>${info.shots || 0}</td>`;
+    const stateCell = `<td>${
+      isSelfAdmin
+        ? '<span class="chip admin">admin</span>'
+        : (info.blocked ? '<span class="chip blocked">bloqueado</span>' : '<span class="chip ok">activo</span>')
+    }</td>`;
+
+    // acciones: si es el admin logueado, mostramos infinito + historial
+    let actionsCell;
+    if (isSelfAdmin){
+      actionsCell = `
+        <td class="actions">
+          <span class="pill infty" title="Este usuario es el admin actual">∞</span>
+          <button class="btn btn-sm" data-a="hist" data-u="${u}">Historial</button>
+        </td>`;
+    } else {
+      actionsCell = `
+        <td class="actions">
+          <input class="qty" type="number" min="1" value="1" data-u="${u}" />
+          <button class="btn btn-primary btn-sm" data-a="add" data-u="${u}">Cargar</button>
+          <button class="btn btn-sm" data-a="sub" data-u="${u}">Retirar</button>
+          <button class="btn btn-sm" data-a="toggle" data-u="${u}">
+            ${info.blocked ? 'Desbloquear' : 'Bloquear'}
+          </button>
+          <button class="btn btn-danger btn-sm" data-a="del" data-u="${u}">Eliminar</button>
+          <button class="btn btn-sm" data-a="hist" data-u="${u}">Historial</button>
+        </td>`;
+    }
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = userCell + shotsCell + stateCell + actionsCell;
+    tb.appendChild(tr);
+  });
+
+  tb.querySelectorAll('button')
+    .forEach(b => b.addEventListener('click', onAdminRowAction));
+}
+
+// filtro en vivo
+document.addEventListener('input', (e)=>{
+  if (e.target && e.target.id === 'userFilter'){
+    userFilter = e.target.value || '';
+    renderUsersTable();
+  }
+});
+const adminBusy = new Set();
+
+async function onAdminRowAction(e){
+  const btn = e?.currentTarget || null;
+  const a = btn?.dataset.a;
+  const u = btn?.dataset.u;
+  if (u === (state.sessions.currentUser || '')) { if (a !== 'hist') return showDialog('No podés operarte a vos mismo 🤝'); }
+  if (!u) return;
+
+  if (adminBusy.has(u)) return;
+  adminBusy.add(u);
+  if (btn) btn.disabled = true;
+
+  try {
+    const rec = await sbGetUserByName(u);
+    if (!rec) { showDialog('Usuario no encontrado en DB'); return; }
+    if (a==='hist'){ await openUserHistory(u); return; }
+    if (a==='toggle'){ await sbSetBlocked(rec.id, !rec.blocked, 'admin'); }
+    if (a==='del'){ if(!confirm('¿Eliminar usuario?')) return; await sbDeleteUser(rec.id); }
+    if (a==='add' || a==='sub'){
+      const qtyInput = document.querySelector(`input.qty[data-u="${u}"]`);
+      let q = parseInt(qtyInput?.value ?? '1', 10); if(isNaN(q)||q<1) q=1;
+      await sbDeltaShots(rec.id, a==='add' ? +q : -q, 'admin');
+    }
+    await Promise.all([ loadUsersFromDB().then(renderUsersTable), renderAdminHistory(), renderStats() ]);
+  } finally {
+    adminBusy.delete(u);
+    if (btn) btn.disabled = false;
+  }
+}
+async function loadUsersFromDB(){
+  const list = await sbListUsers();
+  state.users = {};
+  uid2name = {};                     // ← mapa id → username
+  list.forEach(u => {
+    state.users[u.username] = { password:'', blocked:u.blocked, shots:u.shots, history:[] };
+    uid2name[u.id] = u.username;     // ← guardamos el id
+  });
+  W(state);
+}
+
+const fmtFecha = (iso) =>
+  new Date(iso).toLocaleString('es-AR', { dateStyle:'short', timeStyle:'medium' });
+
+const fmtMoney = (n) =>
+  new Intl.NumberFormat('es-AR', { style:'currency', currency:'ARS', maximumFractionDigits:0 }).format(n||0);
+
+function filaMovimiento(ev){
+  const { ts, type, username, game_slug, prize, label, delta_shots, admin_user } = ev;
+
+  let emoji = '📝';
+  let arriba = '';
+  let abajo  = `🗓 <span class="muted">${fmtFecha(ts)}</span>` +
+               (username ? ` — 👤 <span class="pill">${username}</span>` : '') +
+               (game_slug ? ` — 🎮 <span style="text-transform:uppercase">${game_slug}</span>` : '');
+
+  switch (type) {
+    case 'prize': {
+      const pagado = Number(prize) || 0;
+      emoji  = pagado > 0 ? '💰' : '😶';
+      arriba = `${emoji} <b>Premio: ${fmtMoney(pagado)}</b>${label ? ' — '+label : ''}`;
+      break;
+    }
+    case 'shots_load': {
+      const q = Math.abs(Number(delta_shots) || 0);
+      emoji  = '🔼';
+      arriba = `${emoji} <b>Carga de tiros: +${q}</b>` + (admin_user ? ` — <span class="muted">por ${admin_user}</span>` : '');
+      break;
+    }
+    case 'shots_unload': {
+      const q = Math.abs(Number(delta_shots) || 0);
+      emoji  = '🔽';
+      arriba = `${emoji} <b>Retiro de tiros: -${q}</b>` + (admin_user ? ` — <span class="muted">por ${admin_user}</span>` : '');
+      break;
+    }
+    case 'play': {
+      emoji  = '▶️';
+      arriba = `${emoji} <b>Jugada</b>` + (game_slug ? ` — ${game_slug.toUpperCase()}` : '');
+      break;
+    }
+    case 'user_blocked':    emoji='⛔'; arriba=`${emoji} <b>Usuario bloqueado</b>`; break;
+    case 'user_unblocked':  emoji='✅'; arriba=`${emoji} <b>Usuario desbloqueado</b>`; break;
+    case 'user_created':    emoji='🆕'; arriba=`${emoji} <b>Usuario creado</b>`; break;
+    case 'user_deleted':    emoji='🗑️'; arriba=`${emoji} <b>Usuario eliminado</b>`; break;
+    default: {
+      const t = String(type||'-').replaceAll('_',' ');
+      arriba = `📝 <b>${t}</b>`;
+    }
+  }
+
+  return `
+    <div class="card" style="gap:6px;padding:10px 12px">
+      <div>${arriba}</div>
+      <div class="muted" style="font-size:12px">${abajo}</div>
+    </div>`;
+}
+
+async function renderAdminHistory(){
+  const box = qs('#adminHistory');
+  if(!box) return;
+  box.innerHTML = '';
+
+  const { data, error } = await sb
+    .from('events')
+    .select('ts, type, game_slug, delta_shots, prize, label, admin_user, user_id')
+    .eq('brand', BRAND)
+    .order('ts', { ascending:false })
+    .limit(200);
+
+  // 🔎 LOG PARA DEBUG
+  console.log('[renderAdminHistory] brand=', BRAND, 'error=', error, 'rows=', data?.length, data);
+
+  if (error){ 
+    console.error('[renderAdminHistory] ERROR', error); 
+    return; 
+  }
+
+  if (!data || !data.length){
+    box.innerHTML = `<div class="muted">No hay movimientos registrados para brand=${BRAND}</div>`;
+    return;
+  }
+
+  (data || []).forEach(r=>{
+    const html = filaMovimiento({
+      ts: r.ts,
+      type: r.type,
+      username: uid2name[r.user_id] || '(sin nombre)',
+      game_slug: r.game_slug,
+      delta_shots: r.delta_shots,
+      prize: r.prize,
+      label: r.label,
+      admin_user: r.admin_user
+    });
+    const d = document.createElement('div');
+    d.innerHTML = html;
+    box.appendChild(d.firstElementChild);
+  });
+}
+
+async function openUserHistory(username, title){
+  const rec = await sbGetUserByName(username);
+  if(!rec) return showDialog('Usuario inexistente en DB');
+
+  // Todos los movimientos del user (de su brand)
+  const { data: rows, error } = await sb
+    .from('events')
+    .select('ts, type, game_slug, delta_shots, prize, label, admin_user')
+    .eq('user_id', rec.id)
+    .order('ts', { ascending:false })
+    .limit(300);
+
+  if(error){ console.error(error); return showDialog('Error cargando historial'); }
+
+  const overlay = document.createElement('div');
+  overlay.className='overlay';
+  overlay.innerHTML = `
+    <div class="dialog" style="text-align:left; max-width:560px">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h3 style="margin:0">${title || ('Historial de '+username)}</h3>
+        <button class="btn btn-sm" id="__closeHist">Cerrar</button>
+      </div>
+      <div id="__histBox" class="stack" style="max-height:60vh;overflow:auto;margin-top:10px"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const box = overlay.querySelector('#__histBox');
+  (rows||[]).forEach(ev=>{
+    const html = filaMovimiento({
+      ts: ev.ts,
+      type: ev.type,
+      username,
+      game_slug: ev.game_slug,
+      delta_shots: ev.delta_shots,
+      prize: ev.prize,
+      label: ev.label,
+      admin_user: ev.admin_user
+    });
+    const d = document.createElement('div');
+    d.innerHTML = html;
+    box.appendChild(d.firstElementChild);
+  });
+
+  overlay.querySelector('#__closeHist').addEventListener('click', ()=> overlay.remove());
+}
+
+
+
+async function renderStats(){
+  const { data: users } = await sb.from('users').select('shots').eq('brand', BRAND);
+  const inCirculation = (users||[]).reduce((a,b)=>a+(b.shots||0),0);
+
+  const { data: ups }  = await sb.from('events').select('delta_shots').eq('brand', BRAND).gte('delta_shots', 1);
+  const { data: dwn }  = await sb.from('events').select('delta_shots').eq('brand', BRAND).lte('delta_shots', -1);
+
+  const up   = (ups||[]).reduce((a,b)=>a+(b.delta_shots||0),0);
+  const down = Math.abs((dwn||[]).reduce((a,b)=>a+(b.delta_shots||0),0));
+
+  qs('#statUp').textContent  = up;
+  qs('#statDown').textContent= down;
+  qs('#statCirculation').textContent = inCirculation;
+}
+// --- LOGIN ---
+qs('#btnLogin').addEventListener('click', async ()=>{
+  const u = (qs('#loginUser').value||'').trim();
+  const p = (qs('#loginPass').value||'').trim();
+  log('LOGIN click', { u, p_len: p.length, BRAND, url: location.href });
+
+  if(!u||!p){ showDialog('Completá usuario y contraseña.'); return; }
+
+  // 1) login jugador
+  let rec=null;
+  try{
+    rec = await sbGetUserByCreds(u, p);
+  }catch(err){
+    showDialog('Error consultando usuarios (revisar RLS/policies).'); 
+    return;
+  }
+  if(!rec){
+    log('LOGIN no-matcheó users', { u, BRAND });
+    showDialog(`Usuario o contraseña incorrectos (brand=${BRAND}).`);
+    return;
+  }
+  if(rec.blocked){ showDialog('Usuario bloqueado.'); return; }
+
+  // 2) ¿es admin?
+  let admin=false;
+  try{
+    const { data: rows, error } = await sb.rpc('auth_admin_login', {
+      p_username: u, p_password: p, p_brand: BRAND
+    });
+    if (error) log('auth_admin_login ERROR', error);
+    admin = !!(rows && rows[0] && rows[0].is_admin);
+    log('auth_admin_login DATA', rows, '-> admin=', admin);
+  }catch(e){
+    log('auth_admin_login THROW', e);
+  }
+
+  state.sessions.currentUser = u; W(state);
+  state.users[u] = { password:p, blocked:rec.blocked, shots:rec.shots, history:[] };
+  log('LOGIN OK -> state snapshot', { currentUser: state.sessions.currentUser, shots: rec.shots });
+
+  if (admin){
+    closeGameFrame();
+    show('view-admin');
+    await Promise.all([
+      loadUsersFromDB().then(()=>renderUsersTable()),
+      renderAdminHistory(),
+      renderStats()
+    ]);
+    setTimeout(()=> qs('#userFilter')?.focus({ preventScroll:true }), 0);
+  } else {
+    show('view-dashboard');
+    renderHeader(); renderGames();
+  }
+});
+/* ===== Dashboard (Jugador) ===== */
+function renderHeader(){ const u=cur(); qs('#shotsGeneral').textContent=(u&&u.shots)||0; }
+function renderGames(){
+  const grid=qs('#gamesGrid'); grid.innerHTML='';
+  state.games.forEach(g=>{
+    const el=document.createElement('div'); el.className='card';
+    const disabled = !g.url;
+    el.innerHTML =
+  '<div class="badge">'+g.slug+'</div>'+
+  '<div class="row" style="gap:12px;align-items:center">'+
+    '<div class="thumb">'+(g.icon || "🎮")+'</div>'+   // ← emoji directo
+    '<h3 style="margin:0;text-transform:uppercase">'+g.name+'</h3>'+
+  '</div>'+
+  '<div class="row">'+
+    '<button class="btn btn-primary play" data-slug="'+g.slug+'" '+(disabled?'disabled':'')+'>'+(disabled?'Falta archivo':'Jugar')+'</button>'+
+  '</div>';
+    grid.appendChild(el);
+  });
+  grid.querySelectorAll('.play').forEach(b=>b.addEventListener('click',()=>play(b.dataset.slug)));
+}
+
+let playing = false;
+
+async function play(slug){
+  if (playing) return;
+  const username = state.sessions.currentUser;
+  if(!username) return;
+
+  const g = state.games.find(x=>x.slug===slug);
+  if(!g || !g.url) return showDialog('No encontré el archivo del juego.');
+
+ // chequeo rápido y liviano (evita select('*'))
+const { data: rec, error: qErr } = await sb
+  .from('users')
+  .select('id, blocked, shots')
+  .eq('username', username)
+  .eq('brand', BRAND)
+  .maybeSingle();
+
+if (qErr) {
+  console.error('ERROR select users:', qErr);
+  return showDialog('Error consultando usuario: ' + (qErr.message || 'desconocido'));
+}
+if (!rec) return showDialog('Usuario inexistente.');
+if (rec.blocked)             return showDialog('Usuario bloqueado.');
+if ((rec.shots || 0) < 1)    return showDialog('No tenés tiros cargados.');
+
+  playing = true;
+  let descontado = false;    // ← garantía: solo 1 descuento
+
+  const descontarUno = async () => {
+    if (descontado) return;
+    descontado = true;
+    try{
+      const { data, error } = await sb.rpc('play_and_refresh', {
+  p_username: username,
+  p_game_slug: slug,
+  p_brand: BRAND,   // "oro"
+});
+      if (error){
+        const msg = String(error.message||'');
+        if (msg.includes('NO_SHOTS'))      return showDialog('No tenés tiros cargados.');
+        if (msg.includes('USER_NOT_FOUND')) return showDialog('Usuario inexistente.');
+        if (msg.includes('USER_BLOCKED'))   return showDialog('Usuario bloqueado.');
+        console.error(error); return showDialog('Error al iniciar el juego.');
+      }
+      const newShots = data?.[0]?.shots ?? null;
+      if (newShots != null){
+        state.users[username] = { ...(state.users[username]||{}), shots: newShots };
+        W(state);
+        renderHeader(); // ← se ve al toque (3 → 2)
+      }
+    }catch(e){
+      console.error(e);
+      showDialog('Error al descontar el tiro.');
+    }
+  };
+
+  try{
+    // abrir juego
+    qs('#gfTitle').textContent = g.name;
+    const iframe = qs('#iframeGame');
+    const sep = g.url.includes('?') ? '&' : '?';
+    iframe.removeAttribute('srcdoc');
+    iframe.src = g.url + sep + 'free=1&user=' + encodeURIComponent(username);
+    qs('#gameFrame').classList.add('show');
+
+    // descuenta 1 cuando el juego cargó (una única vez)
+    const onLoad = () => descontarUno();
+    iframe.addEventListener('load', onLoad, { once:true });
+
+    // fallback por si 'load' no dispara en el juego (una sola vez)
+    setTimeout(() => descontarUno(), 1200);
+
+  } finally {
+    // permití volver a hacer click cuando ya está el juego abierto
+    playing = false;
+  }
+}
+
+function closeGameFrame(){
+  const i=qs('#iframeGame'); if(i){ i.src='about:blank'; i.removeAttribute('srcdoc'); }
+  qs('#gameFrame').classList.remove('show');
+}
+
+window.addEventListener('message', async (ev)=>{
+  const d = ev.data || {};
+  if (d.type !== 'prize') return;      // solo reaccionamos al final real
+
+  // Log premio (no bloquea el finish, se hace en paralelo con catch silencioso)
+  (async ()=>{
+    try{
+      const userKey = d.user || (state.sessions.currentUser||'');
+      const rec = await sbGetUserByName(userKey);
+      if (rec) await sbPrize(rec.id, d.game || '-', parseInt(d.value||0,10), d.label || '');
+    }catch(e){ console.warn('log premio falló', e); }
+  })();
+
+  // siempre volver al inicio en 2s sí o sí
+  finishGame({ game:d.game, value:d.value, label:d.label });
+});
+
+/* ===== Captura automática desde los juegos (con 3s de delay) ===== */
+
+
+/* ===== Navegación general ===== */
+function show(id){
+  ['#view-login','#view-dashboard','#view-admin'].forEach(sel=>qs(sel).classList.add('hidden'));
+  qs('#'+id).classList.remove('hidden');
+}
+
+/* ===== Toggle historial total (admin) ===== */
+qs('#toggleAdminHistory').addEventListener('click', ()=>{
+  const wrap = qs('#adminHistoryWrap');
+  if(wrap.classList.contains('hidden')){ renderAdminHistory(); qs('#toggleAdminHistory').textContent='Ocultar historial total'; }
+  else { qs('#toggleAdminHistory').textContent='Ver historial total'; }
+  wrap.classList.toggle('hidden');
+});
+
+// Salir (logout)
+qs('#btnLogout').addEventListener('click', ()=>{
+  state.sessions.currentUser = null; 
+  W(state);
+  closeGameFrame();
+  show('view-login');
+});
+
+// Volver desde Admin a Login
+qs('#btnBackFromAdmin').addEventListener('click', ()=>{
+  show('view-login');
+});
+
+// Crear usuario (admin)
+qs('#btnCreateUser').addEventListener('click', async ()=>{
+  const u = (qs('#newUser').value||'').trim();
+  const p = (qs('#newPass').value||'').trim();
+  if(!u || !p) return showDialog('Usuario y contraseña requeridos');
+
+  // crea si no existe; si existe, no rompe
+  await sbEnsureUser(u, p);
+  qs('#newUser').value = '';
+  qs('#newPass').value = '';
+
+  await loadUsersFromDB();
+  renderUsersTable();
+});
+// Historial (jugador)
+qs('#btnHistorial').addEventListener('click', async ()=>{
+  const u = state.sessions.currentUser;
+  if(!u) return showDialog('Tenés que iniciar sesión.');
+  await openUserHistory(u, 'Tu historial');
+});
+/* ===== Init ===== */
+(async function(){
+  await loadUsersFromDB();  // Users a la UI
+  await renderStats();      // Stats desde DB
+})();
+</script>
+</body>
+</html>

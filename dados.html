@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Dados · Red Oro</title>
+<style>
+:root{--bg:#0b0b0f;--card:#151520;--mut:#9da3af;--line:#ffffff1a;--hi:#7DF9FF}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 20% 20%, #ffffff11 1%, transparent 2%),
+    radial-gradient(circle at 40% 80%, #ffffff11 1%, transparent 2%),
+    radial-gradient(circle at 80% 30%, #ffffff11 1%, transparent 2%),
+    radial-gradient(circle at 70% 60%, #ffffff11 1%, transparent 2%),
+    radial-gradient(circle at 50% 50%, #ffffff22 1%, transparent 2%),
+    #000;
+  color:#e0e0e0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,sans-serif
+}
+.wrap{max-width:560px;margin:0 auto;padding:18px 16px 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;text-align:center}
+h1{margin:6px 0 8px 0;font-size:22px;color:var(--hi);text-shadow:0 0 10px var(--hi)}
+.top{margin:6px 0 12px;text-align:center;color:#cfd3dc;font-size:12px}
+
+/* Premios */
+.prize-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0 16px}
+.prize{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:96px;
+  background:#0b0f1a;border:2px solid var(--hi);border-radius:12px;
+  font-size:22px;     /* MÁS GRANDE */
+  font-weight:900;    /* BIEN NEGRITO */
+  color:#000;         /* números en negro */
+  text-align:center
+}
+.badge{
+  background:#fff;color:#000;
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:14px;     /* MÁS GRANDE */
+  font-weight:900;    /* BIEN NEGRITO */
+  margin-top:6px
+}
+
+/* Dado centrado */
+.board{display:grid;place-items:center;margin:14px 0}
+#dado{
+  width:120px;height:120px;background:#fff;border-radius:20px;
+  box-shadow:0 12px 28px rgba(0,0,0,.45), inset 0 0 8px #0003;
+  margin:0 auto;
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:10px
+}
+.punto{
+  width:18px;height:18px;background:#111;border-radius:50%;
+  box-shadow:0 1px 2px #0008, inset 0 1px 1px #fff6;
+  margin:auto
+}
+
+/* Botón / mensaje centrados */
+.actions{display:grid;place-items:center;gap:10px}
+.btn{border:0;border-radius:12px;padding:12px 16px;background:linear-gradient(180deg,#7DF9FF,#8A2BE2);
+  color:#111;font-weight:800;cursor:pointer}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+#msg{display:none;margin-top:4px;color:#111;background:#7DF9FF;border:2px solid #8A2BE2;border-radius:10px;
+  padding:10px 14px;font-weight:800;text-align:center}
+.tip{margin-top:8px;font-size:10px;text-align:center;letter-spacing:.3px;color:#cfd3dc}
+
+@media (max-width:520px){
+  .prize-grid{grid-template-columns:1fr 1fr}
+  #dado{width:100px;height:100px;gap:8px}
+  .punto{width:14px;height:14px}
+}
+
+.confeti{position:fixed;inset:0;pointer-events:none;z-index:999}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>CASINO ORO · DADOS</h1>
+    <div class="top">🎲 Tirás el dado una vez: el número define el premio.</div>
+
+    <h4 style="margin:6px 0 4px">🎁 Premios</h4>
+    <div class="prize-grid">
+      <div class="prize" style="background:#0aa249">1<span class="badge">1.000 GRATIS</span></div>
+      <div class="prize" style="background:#FF1493">2<span class="badge">2.000 GRATIS</span></div>
+      <div class="prize" style="background:#FF8C00">3<span class="badge">3.000 GRATIS</span></div>
+      <div class="prize" style="background:#DC143C">4<span class="badge">4.000 GRATIS</span></div>
+      <div class="prize" style="background:#1E90FF">5<span class="badge">5.000 GRATIS</span></div>
+      <div class="prize" style="background:#FFD700">6<span class="badge">6.000 GRATIS</span></div>
+    </div>
+
+    <div class="board">
+      <div id="dado" aria-label="dado"></div>
+    </div>
+
+    <div class="actions">
+      <button id="btn" class="btn">Tirar dado 🎲</button>
+      <div id="msg"></div>
+      <div class="tip">📸 Sacá captura y reclamá tu premio por WhatsApp.</div>
+    </div>
+  </div>
+</div>
+
+<canvas id="confetti" class="confeti"></canvas>
+
+<script>
+/* ========= Setup ========= */
+const USER = new URLSearchParams(location.search).get('user') || '';
+const PRIZES = [
+  '1.000 GRATIS 🎉',
+  '2.000 GRATIS 🎁',
+  '3.000 GRATIS 💸',
+  '4.000 GRATIS 🔁',
+  '5.000 GRATIS 🔐',
+  '6.000 GRATIS 💰'
+];
+
+/* ========= Dado ========= */
+const dado = document.getElementById('dado');
+const msg  = document.getElementById('msg');
+const btn  = document.getElementById('btn');
+let animando = false;
+let usado = false;
+
+function mostrarCara(cara){ 
+  dado.innerHTML='';
+  const map = {1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]}[cara];
+  for(let i=0;i<9;i++){
+    const cell = document.createElement('div');
+    if(map.includes(i)){ const p=document.createElement('div'); p.className='punto'; cell.appendChild(p); }
+    dado.appendChild(cell);
+  }
+}
+mostrarCara(1);
+
+btn.addEventListener('click', tirar);
+
+function tirar(){
+  if(animando || usado) return;
+  animando = true; usado = true;
+  btn.disabled = true;
+  msg.style.display='none'; msg.textContent='';
+
+  const final = 1 + Math.floor(Math.random()*6);
+
+  let paso=0, pasosTot=30;
+  const iv = setInterval(()=>{
+    if(paso < pasosTot-1){
+      mostrarCara(1 + Math.floor(Math.random()*6));
+      paso++;
+    } else {
+      clearInterval(iv);
+      mostrarCara(final);
+
+      const label = PRIZES[final-1];
+      msg.textContent = `🎉 ¡Te llevás: ${label}!`;
+      msg.style.display='block';
+      confeti();
+
+      const value = parseInt(label.replace(/\D+/g,'')||'0',10);
+      try{
+        window.parent && window.parent.postMessage({
+          type:'prize', game:'dados', user:USER, label, value
+        }, '*');
+      }catch(e){}
+
+      btn.style.display = 'none';
+      animando=false;
+    }
+  }, 100);
+}
+
+/* ========= Confeti ========= */
+function confeti(){
+  const c = document.getElementById('confetti'), ctx = c.getContext('2d');
+  c.width = innerWidth; c.height = innerHeight;
+  const N = 140, arr=[];
+  for(let i=0;i<N;i++){
+    arr.push({
+      x: Math.random()*c.width,
+      y: Math.random()*-c.height,
+      r: Math.random()*6+4,
+      d: Math.random()*N,
+      color: Math.random()>.5 ? '#FFD700' : '#7DF9FF',
+      vy: Math.random()*2+2
+    });
+  }
+  let t=0;
+  (function loop(){
+    ctx.clearRect(0,0,c.width,c.height);
+    for(let i=0;i<N;i++){
+      const f=arr[i];
+      ctx.beginPath();
+      ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+      ctx.fillStyle=f.color; ctx.fill();
+      f.y += f.vy;
+      if(f.y > c.height){ f.y = -10; f.x = Math.random()*c.width; }
+    }
+    t++; if(t<220) requestAnimationFrame(loop); else ctx.clearRect(0,0,c.width,c.height);
+  })();
+}
+</script>
+</body>
+</html>

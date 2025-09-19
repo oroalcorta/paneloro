@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Ruleta · Red Oro</title>
+<style>
+:root{--bg:#0b0b0f;--card:#151520;--mut:#9da3af;--acc:#d4af37;--acc2:#f0e68c;--line:#ffffff1a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,sans-serif}
+.wrap{max-width:520px;margin:0 auto;padding:16px 14px 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+h1{margin:6px 0 12px 0;font-size:22px;text-align:center}
+.btn{border:0;border-radius:12px;padding:12px 16px;background:linear-gradient(180deg,var(--acc),var(--acc2));color:#111;font-weight:700;cursor:pointer}
+.center{display:grid;place-items:center}
+.marker{width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:26px solid #ffd700;margin:0 auto 10px}
+canvas{width:82vw;max-width:360px;height:auto;border:10px solid #1f2937;border-radius:50%;margin:6px auto 0;display:block;background:radial-gradient(#111,#000);box-shadow:0 0 24px #000 inset;transform-origin:center}
+.result{margin-top:12px;color:var(--mut);text-align:center}
+.badge{display:inline-block;margin:4px 0;padding:2px 8px;border-radius:999px;border:1px solid #ffffff26;color:#ddd;font-size:12px}
+.header{display:grid;place-items:center}
+.header .title{font-weight:900;letter-spacing:.4px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <div class="badge">CASINO ORO · RULETA</div>
+      <h1 class="title">GIRÁ LA RULETA</h1>
+    </div>
+    <div class="marker"></div>
+    <canvas id="wheel" width="480" height="480" aria-label="ruleta"></canvas>
+    <div class="center" style="margin-top:10px"><button id="spin" class="btn">Jugar</button></div>
+    <div id="out" class="result"></div>
+  </div>
+</div>
+
+<script>
+/* ========= Config ========= */
+// Quedan visibles, pero con prob=0 para que nunca salgan:
+const SLICES = [
+  {label:'20% BONO',  color:'#f1c40f', value:null, prob:30},
+  {label:'50% BONO',  color:'#d35400', value:null, prob:26},
+  {label:'OTRO GIRO', color:'#7f8c8d', value:null, prob:0},   // ← 0%
+  {label:'$2.500',    color:'#1abc9c', value:2500,  prob:20},
+  {label:'$5.000',    color:'#2980b9', value:5000,  prob:6},
+  {label:'$10.000',   color:'#27ae60', value:10000, prob:1},
+  {label:'100% BONO', color:'#8e44ad', value:null, prob:17},
+  {label:'$50.000',   color:'#000000', value:50000, prob:0}   // ← 0%
+];
+
+/* ========= Util ========= */
+const q = (sel)=>document.querySelector(sel);
+const USER = new URLSearchParams(location.search).get('user') || '';
+
+/* ========= Dibujo ========= */
+const cnv = q('#wheel'), ctx = cnv.getContext('2d');
+const R = cnv.width/2;
+function drawWheel(){
+  const arc = 2*Math.PI/SLICES.length;
+  ctx.clearRect(0,0,cnv.width,cnv.height);
+  ctx.save(); ctx.translate(R,R);
+  for(let i=0;i<SLICES.length;i++){
+    const s=SLICES[i], a0=i*arc, a1=a0+arc;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.fillStyle=s.color; ctx.arc(0,0,R,a0,a1); ctx.fill();
+    ctx.save(); ctx.rotate(a0+arc/2);
+    ctx.fillStyle=(s.color==='#000000')?'#ffd700':'#fff';
+    ctx.font='bold 18px system-ui';
+    ctx.textAlign='right'; ctx.fillText(s.label, R-12, 6);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+drawWheel();
+
+/* ========= Jugar ========= */
+let spinning=false, angle=0, used=false;
+const btn = q('#spin'), out = q('#out');
+
+function pickIndex(){
+  const total = SLICES.reduce((a,s)=>a+(s.prob||0),0) || 1;
+  let r=Math.random()*total, acc=0;
+  for(let i=0;i<SLICES.length;i++){ acc += (SLICES[i].prob||0); if(r<acc) return i; }
+  return SLICES.length-1;
+}
+
+function spin(){
+  if(spinning || used) return;
+  spinning=true; out.textContent='';
+  const idx = pickIndex();
+  const step = 360/SLICES.length;
+  const target = 360*5 + (270 - (idx*step + step/2)); // 270° = arriba
+  const start = angle, end=target, t0=performance.now(), dur=6000;
+
+  (function anim(t){
+    const k=Math.min(1,(t-t0)/dur);
+    const ease=1-Math.pow(1-k,3);
+    angle=start+(end-start)*ease;
+    cnv.style.transform=`rotate(${angle}deg)`;
+    if(k<1) requestAnimationFrame(anim); else finish(idx);
+  })(t0);
+}
+
+function finish(idx){
+  spinning=false; used=true;
+  const s=SLICES[idx];
+  out.textContent = s.value!=null ? `🎉 ¡Ganaste ${s.label}!` : `🎁 Premio: ${s.label}`;
+  // oculto el botón para que no puedan girar de nuevo
+  btn.style.display='none';
+
+  // Aviso al panel padre (si está embebido en el frame)
+  try{
+    window.parent && window.parent.postMessage({
+      type:'prize', game:'ruleta', user:USER, label:s.label, value:(s.value||0)
+    }, '*');
+  }catch(e){}
+}
+
+btn.addEventListener('click', spin);
+</script>
+</body>
+</html>

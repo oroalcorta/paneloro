@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>Mayor o Menor · Red Oro</title>
+<style>
+:root{--bg:#0b0f1f;--panel:#121931;--line:#273155;--ink:#e9eefc;--acc:#7DF9FF;--acc2:#8A2BE2}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:
+  radial-gradient(1200px 800px at 20% -10%, rgba(138,43,226,.15), transparent 60%),
+  radial-gradient(1000px 700px at 120% 10%, rgba(72,61,139,.15), transparent 55%),
+  radial-gradient(800px 600px at 50% 120%, rgba(186,85,211,.15), transparent 55%),
+  #0b0f1f;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,sans-serif}
+.wrap{min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px}
+.panel{width:100%;max-width:980px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,.35);padding:14px}
+.h1{font-size:1.15rem;font-weight:800;text-align:center;color:var(--acc);text-shadow:0 0 10px var(--acc)}
+.sub{opacity:.9;text-align:center;font-size:.9rem;margin-top:4px}
+.grid{display:grid;grid-template-columns:repeat(10,62px);gap:10px;justify-content:center;margin:12px 0}
+@media (max-width:640px){ .grid{grid-template-columns:repeat(5,62px)} }
+.card{width:62px;height:88px;border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+.card.front{background:linear-gradient(135deg,#fff 70%,#fef4d1 100%);border:2px solid #d4af37;color:#111}
+.card.back{background:linear-gradient(135deg,#2b1b5e 0%,#5927a0 45%,#2b1b5e 100%);border:2px solid #ffffff40}
+.rank{font-size:1.2rem;font-weight:900}
+.suit{position:absolute;bottom:6px;right:8px;font-size:1rem}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.btn{flex:1;min-width:140px;border:0;border-radius:14px;padding:12px 14px;font-weight:900;cursor:pointer}
+.btn:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.15)}
+.btn-major{background:#7cf1ff;color:#10252b}
+.btn-minor{background:#ff94e9;color:#2a0f26}
+.btn-keep{background:#9cff57;color:#143014}
+.btn-cash{background:#ffdf6b;color:#3a2700}
+.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+.hud .pill{background:#0b1324;border:1px solid #22304a;border-radius:12px;padding:8px 10px;font-size:.85rem}
+.val{color:var(--acc)}
+#status{margin-top:6px;text-align:center;font-size:1rem}
+#msg{margin-top:10px;background:var(--acc);border:2px solid var(--acc2);color:#111;border-radius:12px;padding:10px 14px;font-weight:800;text-align:center;display:none}
+.tip{margin-top:8px;font-size:.75rem;opacity:.9;text-align:center}
+canvas.confeti{position:fixed;inset:0;pointer-events:none;z-index:9999}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <div class="h1">CASINO ORO · MAYOR O MENOR</div>
+    <div class="sub">📈 Elegí <b>Mayor</b> o 📉 <b>Menor</b> para la próxima carta. Si fallás, te quedás con la <b>BASE $1.000</b>. Si acertás 10 seguidas llegás a <b>$14.000</b>.</div>
+
+    <div class="hud">
+      <div class="pill">👤 JUGADOR<br><span id="hud-user" class="val">-</span></div>
+      <div class="pill">🗓️ FECHA/HORA (ARG)<br><span id="hud-date" class="val">-</span></div>
+      <div class="pill">💎 BASE<br><span id="hud-base" class="val">$1.000</span></div>
+      <div class="pill">💰 GANANCIA ACTUAL<br><span id="hud-gain" class="val">$1.000</span></div>
+    </div>
+
+    <div id="cards" class="grid"></div>
+
+    <div class="row" id="group-choose">
+      <button id="btn-major" class="btn btn-major">📈 MAYOR</button>
+      <button id="btn-minor" class="btn btn-minor">📉 MENOR</button>
+    </div>
+
+    <div class="row" id="group-post" style="display:none">
+      <button id="btn-keep" class="btn btn-keep">🚀 ARRIESGAR Y SEGUIR</button>
+      <button id="btn-cash" class="btn btn-cash">💰 RETIRARSE CON LO GANADO</button>
+    </div>
+
+    <div id="status">💎 BASE: $1.000 — GANANCIA ACTUAL: $1.000</div>
+    <div id="msg"></div>
+    <div class="tip">📸 Sacá captura para reclamar por WhatsApp. El panel puede tomar el premio automáticamente.</div>
+  </div>
+</div>
+
+<canvas id="confetti" class="confeti"></canvas>
+
+<script>
+/* ===== Lectura de ?user= (opcional, no se muestra si no está) ===== */
+const USER = new URLSearchParams(location.search).get('user') || '';
+
+/* ===== HUD / util ===== */
+const $ = s => document.querySelector(s);
+const hudUser=$('#hud-user'), hudDate=$('#hud-date'), hudBase=$('#hud-base'), hudGain=$('#hud-gain');
+const statusEl=$('#status'), msgEl=$('#msg');
+const BASE = 1000;
+
+function toMoney(n){ return '$'+Number(Math.round(n)).toLocaleString('es-AR'); }
+function fechaHoraAR(){
+  const tz='America/Argentina/Buenos_Aires';
+  return new Intl.DateTimeFormat('es-AR',{timeZone:tz,year:'2-digit',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date());
+}
+function tickClock(){ hudDate.textContent = fechaHoraAR(); }
+setInterval(tickClock,1000); tickClock();
+
+/* ===== Lógica de ganancias (igual a tu original) ===== */
+function gananciaPorPaso(paso){
+  if (paso <= 0) return BASE;      // carta inicial = base
+  if (paso < 9)  return BASE + paso*1000; // +$1000 por acierto
+  return BASE + 8*1000 + 5000;     // paso 9 (10ª carta) = $14.000
+}
+
+/* ===== Mazo y estado ===== */
+const PALOS = ['🪙','🍷','⚔️','🌿']; // oros, copas, espadas, bastos
+let secuencia=[];    // 10 cartas
+let idx=0;           // índice actual (0..9)
+let puedeElegir=true;
+hudUser.textContent = USER || '-';
+hudBase.textContent = toMoney(BASE);
+hudGain.textContent = toMoney(BASE);
+
+/* ===== Render de cartas ===== */
+const cardsEl=$('#cards');
+function crearCard(carta, visible){
+  const el=document.createElement('div');
+  el.className='card ' + (visible?'front':'back');
+  if(visible && carta){
+    const r=document.createElement('div'); r.className='rank'; r.textContent=String(carta.rango);
+    const p=document.createElement('div'); p.className='suit'; p.textContent=carta.palo;
+    el.appendChild(r); el.appendChild(p);
+  }
+  return el;
+}
+function renderCartas(disabled=false){
+  cardsEl.innerHTML='';
+  for(let i=0;i<10;i++){
+    if(i<=idx) cardsEl.appendChild(crearCard(secuencia[i], true));
+    else {
+      const back=crearCard(null,false);
+      if(disabled) back.style.filter='grayscale(100%) brightness(.7)';
+      cardsEl.appendChild(back);
+    }
+  }
+}
+
+/* ===== Nueva partida ===== */
+function nuevaPartida(){
+  // Construye mazo 1..12 por 4 palos
+  const mazo=[];
+  for(let r=1;r<=12;r++){ for(const p of PALOS){ mazo.push({rango:r,palo:p}); } }
+  // Mezcla
+  for(let i=mazo.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [mazo[i],mazo[j]]=[mazo[j],mazo[i]]; }
+  secuencia = mazo.slice(0,10);
+  idx=0; puedeElegir=true; actualizarHUD();
+  renderCartas();
+  setMensaje('');
+  toggleGrupo('choose');
+}
+function actualizarHUD(){
+  const g = gananciaPorPaso(idx);
+  hudGain.textContent = toMoney(g);
+  statusEl.textContent = `💎 BASE: ${toMoney(BASE)} — GANANCIA ACTUAL: ${toMoney(g)}`;
+}
+function setMensaje(t){
+  msgEl.style.display = t ? 'block' : 'none';
+  msgEl.textContent = t || '';
+}
+function toggleGrupo(which){
+  $('#group-choose').style.display = (which==='choose')?'flex':'none';
+  $('#group-post').style.display   = (which==='post')  ?'flex':'none';
+  $('#btn-major').disabled = !(which==='choose' && puedeElegir);
+  $('#btn-minor').disabled = !(which==='choose' && puedeElegir);
+  $('#btn-keep').disabled  = !(which==='post'   && puedeElegir);
+  $('#btn-cash').disabled  = !(which==='post'   && puedeElegir);
+}
+
+/* ===== Eventos ===== */
+$('#btn-major').addEventListener('click', ()=> elegir('mayor'));
+$('#btn-minor').addEventListener('click', ()=> elegir('menor'));
+$('#btn-keep').addEventListener('click', ()=> seguir());
+$('#btn-cash').addEventListener('click', ()=> retirar());
+
+function elegir(tipo){
+  if(!puedeElegir || idx>=9) return;
+  // Desactivar momentáneamente para evitar doble click
+  $('#btn-major').disabled=true; $('#btn-minor').disabled=true;
+
+  const actual = secuencia[idx].rango;
+  const prox   = secuencia[idx+1].rango;
+  const acierta = (tipo==='mayor') ? (prox >= actual) : (prox <= actual);
+
+  idx++;
+  renderCartas();
+  actualizarHUD();
+
+  if(acierta){
+    if(idx===9){
+      // Gana todo ($14.000)
+      const win = gananciaPorPaso(idx);
+      setMensaje(`🎉 ¡FELICIDADES! GANASTE ${toMoney(win)}.\n📸 Sacá captura para reclamar.`);
+      confeti();
+      puedeElegir=false; toggleGrupo('none');
+
+      // Avisar al panel
+      try{ window.parent && window.parent.postMessage({type:'prize', game:'mom', user:USER, label: toMoney(win), value: win}, '*'); }catch(e){}
+      return;
+    }
+    setMensaje(`✅ ¡Bien! Acierto ${idx}.\n¿Seguís arriesgando o te retirás?`);
+    toggleGrupo('post');
+  } else {
+    // Falló -> cobra BASE
+    const base = BASE;
+    setMensaje(`❌ Fallaste. Te quedás con la BASE: ${toMoney(base)}.`);
+    puedeElegir=false; toggleGrupo('none');
+
+    try{ window.parent && window.parent.postMessage({type:'prize', game:'mom', user:USER, label: toMoney(base), value: base}, '*'); }catch(e){}
+  }
+}
+
+function seguir(){
+  if(!puedeElegir) return;
+  setMensaje('🚀 OK, seguís. Elegí MAYOR o MENOR para la próxima carta.');
+  toggleGrupo('choose');
+}
+function retirar(){
+  if(!puedeElegir) return;
+  const win = gananciaPorPaso(idx);
+  setMensaje(`🎉 ¡FELICIDADES! GANASTE ${toMoney(win)}.\n📸 Sacá captura para reclamar.`);
+  confeti(); puedeElegir=false; toggleGrupo('none');
+
+  try{ window.parent && window.parent.postMessage({type:'prize', game:'mom', user:USER, label: toMoney(win), value: win}, '*'); }catch(e){}
+}
+
+/* ===== Confeti simple (sin libs) ===== */
+function confeti(){
+  const c = $('#confetti'), ctx = c.getContext('2d');
+  function rs(){ c.width=innerWidth; c.height=innerHeight; }
+  rs(); addEventListener('resize', rs);
+  const N=200, P=Array.from({length:N},()=>({
+    x:Math.random()*c.width, y:-Math.random()*c.height,
+    r:Math.random()*6+3, col:Math.random()>.5?'#FFD700':'#C0C0C0',
+    s:Math.random()*2+1, t:Math.random()*Math.PI*2
+  }));
+  let raf=null; (function loop(){
+    ctx.clearRect(0,0,c.width,c.height);
+    P.forEach(p=>{
+      ctx.beginPath(); ctx.fillStyle=p.col; ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      p.t+=.03; p.y+=p.s+Math.sin(p.t)*.4; p.x+=Math.cos(p.t)*.4;
+      if(p.y>c.height+10){ p.y=-10; p.x=Math.random()*c.width; }
+      if(p.x<-10) p.x=c.width+10; if(p.x>c.width+10) p.x=-10;
+    });
+    raf=requestAnimationFrame(loop);
+    setTimeout(()=>cancelAnimationFrame(raf), 6000);
+  })();
+}
+
+/* ===== Init ===== */
+nuevaPartida();
+</script>
+</body>
+</html>

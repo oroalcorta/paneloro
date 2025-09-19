@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+<title>CASINO ORO — MINAS</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b1020; --panel:#0f1628; --stroke:#26304a; --ink:#e9eefc;
+    --green:#24e07a; --green-d:#0ea763; --cyan:#3ee7ff;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:linear-gradient(135deg,#0a1022,#0f1832);color:var(--ink);font-family:'Poppins',system-ui,sans-serif}
+  .wrap{min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px}
+  .panel{width:100%;max-width:860px;background:var(--panel);border:1px solid var(--stroke);border-radius:var(--radius);box-shadow:0 12px 28px rgba(0,0,0,.35);padding:12px}
+  h1{font-size:1.1rem;margin:2px 0;text-align:center}
+  h2{font-size:.95rem;margin:0;text-align:center}
+
+  .game{display:grid;grid-template-columns:1fr 250px;gap:10px;width:100%}
+  @media(max-width:780px){ .game{grid-template-columns:1fr} }
+  .board-box{display:flex;justify-content:center;width:100%}
+  .board{width:min(94vw,340px);display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+  .cell{aspect-ratio:1;border-radius:12px;background:#121b32;border:1px solid #2a3754;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;cursor:pointer}
+  .cell .shine{position:absolute;inset:0;background:linear-gradient(130deg,rgba(255,255,255,.08),transparent 60%);opacity:0;transition:opacity .2s}
+  .cell:hover .shine{opacity:.8}
+  .gem,.mine{font-size:2.2rem}
+  .cell.safe{background:#0f1c37;border-color:#1c3b2d}
+  .cell.boom{background:#2a0f0f;border-color:#632727;animation:boom .35s ease}
+  @keyframes boom{0%{transform:scale(.96)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+
+  .side{display:flex;flex-direction:column;gap:8px}
+  .pill{background:#0b1324;border:1px solid #22304a;border-radius:12px;padding:8px 10px;font-size:.82rem}
+  .val{color:var(--cyan)}
+  .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+
+  select#select-mines{background:#e6ffe6;color:#004d00;border:2px solid #33cc33;border-radius:10px;padding:6px;font-weight:700}
+  .badge{background:#151f36;border:1px solid #2a3754;border-radius:999px;padding:4px 8px;font-weight:800;font-size:.75rem;white-space:nowrap}
+
+  .status{background:#0b1324;border:1px solid #22304a;border-radius:12px;padding:8px;min-height:58px;font-size:.88rem}
+
+  .btn{border:none;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer;text-align:center}
+  .btn-green{background:linear-gradient(180deg,var(--green),#14c16a);color:#00160c;box-shadow:0 6px 0 var(--green-d)}
+  .btn-gold{background:linear-gradient(180deg,var(--cyan),#13c1d6);color:#07161a;box-shadow:0 6px 0 #0a7b8a}
+  .btn:disabled{opacity:.55;filter:grayscale(.15);cursor:not-allowed}
+
+  /* Modal + confeti */
+  #overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100000;align-items:center;justify-content:center;padding:16px}
+  #modal{width:min(520px,92vw);background:#0f1628;border:1px solid #26304a;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.6);padding:18px;text-align:center}
+  #modal-title{font-weight:800;font-size:1.05rem;margin-bottom:8px}
+  #modal-msg{opacity:.9;margin-bottom:14px}
+  canvas#confeti{position:fixed;inset:0;pointer-events:none;z-index:99999}
+
+  /* Revelado final */
+  .cell.reveal-safe{background:#0f1c37;border-color:#1c3b2d}
+  .cell.reveal-mine{background:#2a0f0f;border-color:#632727}
+  .cell.faded{opacity:.45; filter:saturate(.7) brightness(.9)}
+  .cell.open-strong{opacity:1; filter:none}
+  .cell.safe.open-strong,.cell.reveal-safe.open-strong{border-color:var(--green);box-shadow:0 0 0 3px var(--green) inset}
+  .cell.reveal-mine.open-strong{border-color:#ff6363;box-shadow:0 0 0 3px #ff6363 inset}
+  .cell.hit{outline:3px solid #ff6363;box-shadow:0 0 0 3px #ff6363 inset,0 0 18px rgba(255,99,99,.35) inset}
+  .cell.picked{outline:3px solid var(--green);box-shadow:0 0 18px rgba(33,195,107,.35) inset}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="p2" class="panel" role="main" aria-label="Juego">
+    <div style="font-size:.78rem;opacity:.85;margin:-2px 0 8px;align-self:flex-start">🏛️ <b>CASINO ORO</b> — <b>MINAS</b></div>
+    <div class="game">
+      <div class="board-box"><div id="board" class="board"></div></div>
+      <div class="side">
+        <div class="pill">👤 JUGADOR<br><span id="hud-user" class="val">-</span></div>
+        <div class="pill">🗓️ FECHA/HORA (ARG)<br><span id="hud-date" class="val">-</span></div>
+
+        <div class="pill">
+          <div class="row">
+            <label class="label" for="select-mines" style="margin:0">MINAS</label>
+            <select id="select-mines"></select>
+            <span class="badge">Base: <span id="preview-base">$0</span></span>
+            <span class="badge">Máximo: <span id="preview-tope">$0</span></span>
+          </div>
+          <div id="base-note" class="label" style="margin-top:6px;font-size:.75rem;opacity:.8;text-align:center"></div>
+        </div>
+
+        <div class="pill">💎 CAJA ACTUAL<br><span id="hud-cash" class="val">$0</span></div>
+        <div class="status" id="status">Tocá una casilla. 💎 suma, 💣 explota.</div>
+
+        <button id="btn-cashout" class="btn btn-gold" disabled>RETIRAR Y COBRAR 💰</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<canvas id="confeti"></canvas>
+<div id="overlay">
+  <div id="modal">
+    <div id="modal-title">Resultado</div>
+    <div id="modal-msg"></div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button id="modal-close" class="btn btn-gold">CERRAR</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== Lectura de usuario desde ?user= (no se muestra si no viene) ====== */
+const params = new URLSearchParams(location.search);
+const USER = params.get('user') || '';
+
+/* ====== Util ====== */
+const $ = s => document.querySelector(s);
+const toMoney = n => '$' + Number(Math.round(n)).toLocaleString('es-AR');
+function fechaHoraAR(){
+  const tz='America/Argentina/Buenos_Aires';
+  return new Intl.DateTimeFormat('es-AR',{timeZone:tz,year:'2-digit',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date());
+}
+function startClock(){ const el=$('#hud-date'); const tick=()=>{ el.textContent=fechaHoraAR() }; tick(); clearInterval(window.__clk); window.__clk=setInterval(tick,1000); }
+
+/* ====== Config de pagos (idéntico a tu lógica base/tope) ====== */
+const GRID = 5, CELLS = 25;
+// Base pasa a $0 desde 11 minas
+const BASE_ZERO_FROM = 11;
+// base lineal simple: 100 * minas (o 0 si >=11)
+const basePorMinas = m => (m >= BASE_ZERO_FROM ? 0 : 100 * m);
+// tope por cantidad de minas (tabla tomada del original)
+const CAP_POR_MINAS = {
+  1:2500, 2:3000, 3:3600, 4:4300, 5:5200, 6:6300, 7:7600, 8:9200, 9:11100, 10:13400,
+  11:16200, 12:19600, 13:23800, 14:29000, 15:35300, 16:43000, 17:52300, 18:63600, 19:77300,
+  20:100000, 21:95000, 22:90000, 23:86000, 24:82000
+};
+const topePorMinas = m => CAP_POR_MINAS[m] || 5000;
+// pago progresivo: interpola base→tope según % de casillas seguras abiertas
+function payoutProgresivo(k, m){
+  const S = 25 - m; // seguras totales
+  const base = basePorMinas(m);
+  const CAP  = topePorMinas(m);
+  const t = Math.max(0, Math.min(1, k / S));
+  return Math.round(base + (CAP - base) * t);
+}
+function nextCaja(prevCaja, k, m){
+  const objetivo = payoutProgresivo(k, m);
+  return Math.max(prevCaja + 1, objetivo); // siempre sube al menos $1
+}
+
+/* ====== Estado ====== */
+let usuario = USER || '-';
+let m = 3;       // minas
+let base = 300;  // base por minas
+let tope = 4000; // tope por minas
+let caja = 0;    // caja actual
+let mapa = [];   // 0 safe, 1 mina
+let abiertos = 0;
+let jugando = false, terminado = false;
+let opened = new Set();
+let lastPick = null;
+
+/* ====== UI refs ====== */
+const boardEl=$('#board'), hudUser=$('#hud-user'), hudCash=$('#hud-cash');
+const hudDate=$('#hud-date'), statusEl=$('#status'), btnCashout=$('#btn-cashout');
+const selMines=$('#select-mines'), previewBase=$('#preview-base'), previewTope=$('#preview-tope');
+const baseNote=$('#base-note'), overlay=$('#overlay'), modalTitle=$('#modal-title'), modalMsg=$('#modal-msg'), modalClose=$('#modal-close');
+
+/* ====== Init ====== */
+(function init(){
+  hudUser.textContent = usuario;
+  startClock();
+  fillSelect();
+  selMines.value = '3';
+  applyMines();
+  resetBoard();
+})();
+
+/* ====== Select de minas ====== */
+function fillSelect(){
+  selMines.innerHTML = '';
+  for(let i=1;i<=24;i++){
+    const o=document.createElement('option'); o.value=i; o.textContent=i; selMines.appendChild(o);
+  }
+  selMines.onchange = ()=>{ applyMines(); resetBoard(); };
+}
+function applyMines(){
+  m = Number(selMines.value);
+  base = basePorMinas(m);
+  tope = topePorMinas(m);
+  previewBase.textContent = toMoney(base);
+  previewTope.textContent = toMoney(tope);
+  baseNote.textContent = (m >= BASE_ZERO_FROM)
+    ? '⚠️ Desde 11 minas no hay base: si explota, cobrás $0.'
+    : '💼 Con base: si explota, te llevás la base.';
+}
+
+/* ====== Tablero ====== */
+function resetBoard(){
+  abiertos=0; terminado=false; jugando=true; opened.clear(); lastPick=null;
+  setCash(base > 0 ? base : 0);
+  statusEl.textContent='Tocá una casilla. Cada 💎 suma, una 💣 explota.';
+  btnCashout.disabled=true; selMines.disabled=false;
+  makeBoard();
+  placeMines();
+}
+function makeBoard(){
+  boardEl.innerHTML='';
+  for(let i=0;i<CELLS;i++){
+    const c=document.createElement('div'); c.className='cell';
+    const sh=document.createElement('div'); sh.className='shine'; c.appendChild(sh);
+    c.addEventListener('click',()=>pick(i)); boardEl.appendChild(c);
+  }
+}
+function placeMines(){
+  mapa = Array(CELLS).fill(0);
+  const pos=[...Array(CELLS).keys()];
+  for(let i=pos.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pos[i],pos[j]]=[pos[j],pos[i]]; }
+  for(let i=0;i<m;i++) mapa[pos[i]]=1;
+}
+
+/* ====== Jugar ====== */
+function setCash(v){ caja=v; hudCash.textContent=toMoney(caja); }
+function pick(i){
+  if(!jugando || terminado) return;
+  const cell = boardEl.children[i];
+  if(!cell || cell.classList.contains('reveal')) return;
+
+  selMines.disabled = true;
+  cell.classList.add('reveal');
+
+  const esMina = mapa[i] === 1;
+  if (esMina){
+    cell.className='cell boom';
+    cell.innerHTML='<div class="mine">💣</div>';
+    explotar(i);
+    return;
+  }
+
+  // safe
+  cell.className='cell safe';
+  cell.innerHTML='<div class="gem">💎</div>';
+  abiertos++;
+  opened.add(i);
+  lastPick = i;
+  cell.classList.add('open-strong');
+
+  // sube caja (con mínimo +1) y respeta tope
+  const next = Math.min(topePorMinas(m), nextCaja(caja, abiertos, m));
+  setCash(next);
+
+  btnCashout.disabled = false;
+  statusEl.textContent='¡Bien! Podés RETIRAR 💰 o seguir abriendo.';
+}
+
+function revealAll(bangIndex){
+  for(let i=0;i<CELLS;i++){
+    const cell=boardEl.children[i]; if(!cell) continue;
+    const fueAbierta = opened.has(i);
+    if(mapa[i]){
+      cell.className='cell reveal-mine '+(fueAbierta?'open-strong':'faded');
+      cell.innerHTML='<div class="mine">💣</div>';
+    }else{
+      cell.className='cell reveal-safe '+(fueAbierta?'open-strong':'faded');
+      cell.innerHTML='<div class="gem">💎</div>';
+    }
+    cell.style.pointerEvents='none';
+  }
+  if(typeof bangIndex==='number'){
+    const hit=boardEl.children[bangIndex];
+    if(hit) hit.classList.add('hit');
+  }
+}
+
+function explotar(bangIndex){
+  terminado=true; jugando=false;
+
+  const teniaBase = base > 0;
+  const premioFinal = teniaBase ? base : 0;
+  setCash(premioFinal);
+
+  statusEl.textContent = teniaBase
+    ? '💥 Qué lástima… explotó. Al menos ganaste la BASE.'
+    : '💥 Qué lástima… explotó. Sin base cobrás $0.';
+
+  revealAll(bangIndex);
+  showModal(false, premioFinal);
+
+  // Aviso al panel
+  try{
+    window.parent && window.parent.postMessage({
+      type:'prize', game:'minas', user:USER, label: teniaBase? `BASE ${toMoney(premioFinal)}` : '$0', value: premioFinal
+    }, '*');
+  }catch(e){}
+}
+
+btnCashout.addEventListener('click', ()=>{
+  if(!jugando || terminado) return;
+  terminado=true; jugando=false;
+  statusEl.textContent = `🎉 ¡FELICIDADES! Cobraste ${toMoney(caja)}`;
+  revealAll();
+  if(typeof lastPick==='number'){ const picked = boardEl.children[lastPick]; if(picked) picked.classList.add('picked'); }
+  confetiStart();
+  showModal(true, caja);
+
+  // Aviso al panel
+  try{
+    window.parent && window.parent.postMessage({
+      type:'prize', game:'minas', user:USER, label:`${toMoney(caja)}`, value:caja
+    }, '*');
+  }catch(e){}
+});
+
+/* ====== Modal / Confeti ====== */
+function showModal(win, value){
+  modalTitle.textContent = win ? '¡Felicidades! 🎉' : 'Qué lástima 😔';
+  modalMsg.innerHTML = win
+    ? `Cobraste <b>${toMoney(value)}</b>.<br>📲 Reclamá tu premio por WhatsApp.`
+    : `Resultado: <b>${toMoney(value)}</b>.`;
+  overlay.style.display='flex';
+  modalClose.onclick = ()=> overlay.style.display='none';
+}
+let confRAF=null, confP=[];
+function confetiStart(){
+  const canvas=document.getElementById('confeti'); const ctx=canvas.getContext('2d');
+  function rs(){ canvas.width=innerWidth; canvas.height=innerHeight; } rs(); addEventListener('resize',rs);
+  confP=Array.from({length:160},()=>({x:Math.random()*canvas.width,y:-Math.random()*canvas.height,r:Math.random()*6+3,c:Math.random()>0.5?'#3EE7FF':'#54F2A1',s:Math.random()*2+1,t:Math.random()*Math.PI*2}));
+  function loop(){ ctx.clearRect(0,0,canvas.width,canvas.height);
+    confP.forEach(p=>{ ctx.beginPath(); ctx.fillStyle=p.c; ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      p.t+=0.03; p.y+=p.s+Math.sin(p.t)*0.35; p.x+=Math.cos(p.t)*0.35;
+      if(p.y>canvas.height+10){p.y=-10;p.x=Math.random()*canvas.width;}
+      if(p.x<-10) p.x=canvas.width+10; if(p.x>canvas.width+10) p.x=-10; });
+    confRAF=requestAnimationFrame(loop);}
+  if(!confRAF) loop();
+}
+</script>
+</body>
+</html>

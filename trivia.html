@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="utf-8" />
+  <title>Casino Oro — Trivia</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --sky1:#B9EAF7; --sky2:#76C9F5; --sea:#7FD4E2; --sand:#FFE3B3;
+      --ink:#28323F; --stroke:#DFE7F2; --panel:#fff; --panel2:#f7fbff;
+      --brand:#FFD34A; --accent:#22c55e; --danger:#ef4444;
+      --c1:#73A7FF; --c2:#FFB25E; --c3:#FF7BB3; --c4:#52E0C4; --c5:#C9B0FF; --c6:#FFE066; --c7:#FFC83D;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;font-family:'Nunito',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);
+      background:linear-gradient(180deg,var(--sky1),var(--sky2))
+    }
+    .bg{position:fixed;inset:0;pointer-events:none;z-index:-1}
+    .bg .sea{position:absolute;left:-5%;right:-5%;bottom:0;height:38vh;background:var(--sea);border-top-left-radius:40% 20%;border-top-right-radius:40% 20%;box-shadow:0 -8px 0 #59c3d6 inset}
+    .bg .sand{position:absolute;left:-10%;right:-10%;bottom:-6vh;height:18vh;background:var(--sand);border-top-left-radius:50% 20%;border-top-right-radius:50% 20%;box-shadow:0 -10px 0 #f7dba3 inset}
+    .hidden{display:none!important}
+
+    .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
+    .brand{display:flex;gap:10px;align-items:center;font-weight:900;font-size:20px;cursor:default}
+    .chip{background:#fff;border:2px solid var(--brand);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;box-shadow:0 2px 0 #d7b83d}
+    .brand b{color:#C99E00}
+    .top-meta{color:#41607e;font-weight:800}
+
+    .pill{background:#fff;border:2px solid var(--stroke);border-radius:999px;padding:8px 14px;font-weight:900;box-shadow:0 6px 0 #e9f3ff}
+    .prizebar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 16px 0}
+    .crowns{display:flex;gap:6px}
+    .crown{width:26px;height:26px;opacity:.35}
+    .crown.filled{opacity:1}
+
+    .card{background:var(--panel);border:2px solid var(--stroke);border-radius:24px;box-shadow:0 10px 0 #e9f3ff}
+    .stage-card{margin:16px auto;max-width:840px;width:calc(100% - 32px);padding:16px}
+    .stage{min-height:650px;display:flex;align-items:center;justify-content:center}
+
+    /* Rueda adaptable */
+    :root{ --wheel-size: min(88vw, 504px); }
+    .wheel-wrap{ position:relative; width:var(--wheel-size); max-width:100%; margin-inline:auto; }
+    #wheel{ display:block; width:var(--wheel-size); height:auto; aspect-ratio:1; background:#fff;
+            border-radius:50%; border:6px solid #f3f7ff; box-shadow:0 10px 0 #e9f3ff }
+    .spin-center, #btn-spin{
+      position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+      width:32%; height:32%; border-radius:50%; display:flex; align-items:center; justify-content:center;
+      background:#fff; border:3px solid var(--stroke); font-weight:900; cursor:pointer; box-shadow:0 10px 0 #e9f3ff;
+    }
+    .spin-center .arrow, #btn-spin .arrow{
+      position:absolute; top:6%; left:50%; transform:translateX(-50%);
+      width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:18px solid #111
+    }
+
+    .inter{display:flex;flex-direction:column;align-items:center;gap:14px}
+    .badge{display:inline-flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--stroke);border-radius:999px;padding:10px 16px;font-weight:900}
+    .inter .title{font-size:28px;font-weight:900}
+
+    .qview{width:100%;max-width:720px}
+    .qhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .qcat{display:inline-flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--stroke);border-radius:999px;padding:8px 12px;font-size:14px;font-weight:900;color:#3f5870;box-shadow:0 6px 0 #e9f3ff}
+    .qcat .dot{width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 2px var(--stroke)}
+    .qwrap{background:#fff;border:2px solid var(--stroke);border-radius:22px;padding:22px;margin:18px 0;box-shadow:0 8px 0 #e9f3ff}
+    .q{margin:2px 0 0;font-size:24px;font-weight:900}
+    .options{display:grid;gap:14px}
+    .opt{border:2px solid var(--stroke);background:#fff;color:#23313f;border-radius:18px;padding:16px;text-align:center;cursor:pointer;font-weight:900;box-shadow:0 6px 0 #e9f3ff;transition:.08s}
+    .opt.correct{border-color:#22c55e;background:#edfff5}
+    .opt.wrong{border-color:#ef4444;background:#fff0f0}
+    .opt:disabled{opacity:.95;cursor:not-allowed}
+    .timer{margin-top:12px;height:12px;background:#ecf5ff;border-radius:6px;border:2px solid var(--stroke);overflow:hidden;box-shadow:0 6px 0 #e9f3ff}
+    .timer>div{height:100%;width:100%;background:linear-gradient(90deg,var(--c1),var(--c5));transition:width .2s linear}
+
+    .end-banner{margin-top:14px;text-align:center}
+    .end-banner .pill{display:inline-block}
+
+    .confetti-canvas{position:fixed; inset:0; pointer-events:none; z-index:9999;}
+
+    /* Tipos y paddings fluidos */
+    .title{ font-size: clamp(22px, 6vw, 34px); }
+    .inter .title{ font-size: clamp(20px, 5.2vw, 28px); }
+    .q{ font-size: clamp(18px, 4.8vw, 24px); }
+    .qcat{ font-size: clamp(12px, 3.2vw, 14px); }
+    .opt{ font-size: clamp(14px, 3.6vw, 18px); padding: clamp(12px, 3.2vw, 16px); }
+    .pill{ padding: clamp(8px, 2.4vw, 10px) clamp(12px, 3.6vw, 14px); }
+
+    @media (max-width: 480px){
+      .prizebar{ flex-direction: column; align-items: stretch; }
+      .crowns{ justify-content: center; }
+      .crown{ width:22px; height:22px; }
+      .topbar{ gap:8px; flex-wrap: wrap; }
+    }
+    /* --- Modal de elección de premio (más lindo) --- */
+.choice-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:14px; text-align:center;
+}
+.choice-card{
+  background:#fff; border:2px solid var(--stroke); border-radius:16px;
+  padding:16px; box-shadow:0 8px 0 #e9f3ff;
+  transition:transform .08s ease, box-shadow .08s ease, border-color .08s ease;
+}
+.choice-card:hover{ transform:translateY(-2px); box-shadow:0 10px 0 #e4efff; border-color:#cfe0fb; }
+.choice-title{ margin:0 0 6px; font-size:18px; font-weight:900; color:#3f5870; }
+.choice-value{ font-size:26px; font-weight:900; margin:4px 0 10px; color:#1b2a3a; }
+.choice-btn{
+  font-weight:900; border:2px solid var(--stroke); border-radius:12px; background:#fff; cursor:pointer;
+  padding:10px 14px; box-shadow:0 6px 0 #e9f3ff;
+}
+.choice-btn:hover{ border-color:#cfe0fb; }
+@media (max-width:560px){ .choice-grid{ grid-template-columns:1fr; } }
+/* ==== Botón base (todos) ==== */
+.btn{
+  border:none;
+  border-radius:14px;
+  padding:12px 18px;
+  font-weight:800;
+  font-size:15px;
+  cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+  display:inline-block;
+  text-align:center;
+}
+.btn:hover{ transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.25); }
+.btn:active{ transform:translateY(0); filter:brightness(.98); }
+.btn:disabled{ opacity:.55; cursor:not-allowed; box-shadow:none; }
+
+/* ==== Variantes ==== */
+/* Celeste / primario (Girar, Continuar, Aceptar, etc.) */
+.btn-ok,
+.btn-primary{
+  background:linear-gradient(180deg,#7df9ff,#3bc6d7);
+  color:#0b1d24;
+  box-shadow:0 4px 0 #1996a5;
+}
+
+/* Verde (Comenzar, Arriesgar, Confirmar positivo) */
+.btn-green{
+  background:linear-gradient(180deg,#9cff57,#6ccb2f);
+  color:#143014;
+  box-shadow:0 4px 0 #3a7c1e;
+}
+
+/* Amarillo (Retirarse con fichas / Cobrar premio) */
+.btn-cash{
+  background:linear-gradient(180deg,#ffdf6b,#ffc107);
+  color:#3a2700;
+  box-shadow:0 4px 0 #b28b00;
+}
+
+/* Rosa (Bonificación, Menor, acciones secundarias) */
+.btn-minor{
+  background:linear-gradient(180deg,#ff94e9,#e640b4);
+  color:#2a0f26;
+  box-shadow:0 4px 0 #a32672;
+}
+
+/* Rojo (Cancelar fuerte / Retirarme) */
+.btn-cancel{
+  background:linear-gradient(180deg,#ff9aa2,#ef4444);
+  color:#3a0d0d;
+  box-shadow:0 4px 0 #b91c1c;
+}
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true">
+    <div class="sea"></div>
+    <div class="sand"></div>
+  </div>
+
+  <!-- GAME -->
+  <section id="screen-game">
+    <div class="topbar">
+      <div class="brand"><div class="chip">★</div>CASINO <b>ORO</b></div>
+      <div class="top-meta">Trivia</div>
+      <div class="top-meta" id="userClock">—</div>
+    </div>
+
+    <div class="prizebar">
+      <div class="pill">Premio acumulado: <span id="prize">$2.000</span> <span id="bonusInfo"></span></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="pill" id="progressLabel" style="display:none">Progreso: <span id="steps">0</span>/3</div>
+        <div class="crowns" id="crowns"></div>
+      </div>
+    </div>
+
+    <div class="card stage-card">
+      <!-- WHEEL -->
+      <div id="stage-wheel" class="stage">
+        <div>
+          <div class="wheel-wrap">
+            <canvas id="wheel" width="504" height="504"></canvas>
+            <button id="btn-spin" class="spin-center"><span class="arrow"></span>GIRAR</button>
+          </div>
+          <div id="endBanner" class="end-banner hidden"></div>
+        </div>
+      </div>
+
+      <!-- INTER -->
+      <div id="stage-inter" class="stage hidden">
+        <div class="inter">
+          <div class="badge"><span id="interDot" style="width:12px;height:12px;border-radius:50%;background:#555"></span> Te tocó</div>
+          <div class="title" id="interTitle">—</div>
+          <div id="interDesc" style="color:#3f5870;font-weight:800"></div>
+          <button id="btn-begin" class="btn primary">Comenzar</button>
+        </div>
+      </div>
+
+      <!-- QUESTION -->
+      <div id="stage-question" class="stage hidden">
+        <div class="qview">
+          <div class="qhead">
+            <div class="qcat"><span class="dot" id="qDot"></span><span id="qCat">—</span></div>
+            <div class="qtime">Tiempo: <span id="qTime">10</span>s</div>
+          </div>
+          <div class="qwrap"><div class="q" id="qText">—</div></div>
+          <div class="options" id="opts"></div>
+          <div class="timer"><div id="tbar"></div></div>
+          <div style="display:flex;justify-content:center;margin-top:14px">
+            <button id="btn-continue" class="btn hidden">Continuar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL -->
+  <div id="modal" class="hidden" style="position:fixed;inset:0;background:#0004;display:flex;align-items:center;justify-content:center;padding:20px;z-index:20">
+    <div class="mcard" style="background:var(--panel);border:2px solid var(--stroke);border-radius:20px;max-width:680px;width:100%;padding:20px;box-shadow:0 12px 0 #e9f3ff">
+      <h3 id="mTitle" style="margin:0 0 8px;font-size:24px">—</h3>
+      <p id="mText" style="color:#52779b;font-weight:800">—</p>
+      <div class="mfoot" style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+        <button id="mCancel" class="btn">Cancelar</button>
+        <button id="mOk" class="btn primary">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="confetti" class="confetti-canvas"></canvas>
+
+  <script>
+/* ===================== CONFIG (local) ===================== */
+const BASE_PRIZE = 2000;
+const BONUS_TABLE = [0.20, 0.40, 0.80, 1.00, 1.50, 2.00, 2.00];
+const MAX_CROWNS = 6;
+const MAX_PRIZE_CAP = 128000;     // 2^6 * 2000
+const TIME_LIMIT_SEC = 10;
+
+/* ===================== UTILS ===================== */
+const $ = s => document.querySelector(s);
+function getCSS(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+const money = n => new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',maximumFractionDigits:0}).format(n);
+async function sha256(t){
+  const h=await crypto.subtle.digest('SHA-256', new TextEncoder().encode((t||'').normalize('NFKC').trim()));
+  return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ===================== STATE & DOM ===================== */
+const state = {
+  user:null, crowns:0, steps:0,
+  spinning:false, answering:false, gameOver:false,
+  currentCategory:null, currentQuestion:null,
+  askedTotal:0, timer:null, timeLeft:TIME_LIMIT_SEC,
+};
+const userClock=$('#userClock');
+const prizeEl=$('#prize'), progressLabel=$('#progressLabel'), stepsEl=$('#steps');
+const crownsWrap=$('#crowns');
+const stageWheel=$('#stage-wheel'), stageInter=$('#stage-inter'), stageQuestion=$('#stage-question');
+const wheel=$('#wheel'), btnSpin=$('#btn-spin'), endBanner=$('#endBanner');
+const interDot=$('#interDot'), interTitle=$('#interTitle'), interDesc=$('#interDesc'), btnBegin=$('#btn-begin');
+const qDot=$('#qDot'), qCat=$('#qCat'), qText=$('#qText'), opts=$('#opts'), tbar=$('#tbar'), qTime=$('#qTime');
+const btnContinue=$('#btn-continue');
+const modal=$('#modal'), mTitle=$('#mTitle'), mText=$('#mText'), mCancel=$('#mCancel'), mOk=$('#mOk');
+
+/* ===================== PANTALLAS ===================== */
+function setStage(name){
+  stageWheel.classList.toggle('hidden',name!=='wheel');
+  stageInter.classList.toggle('hidden',name!=='inter');
+  stageQuestion.classList.toggle('hidden',name!=='question');
+}
+function renderCrowns(){
+  crownsWrap.innerHTML='';
+  for(let i=0;i<MAX_CROWNS;i++){
+    const el=document.createElement('img');
+    el.className='crown'+(i<state.crowns?' filled':'');
+    el.alt='crown';
+    el.src='data:image/svg+xml;utf8,'+encodeURIComponent(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${i<state.crowns?'%23FFC83D':'%23C6D3E4'}"><path d="M3 8l4 4 5-7 5 7 4-4v10H3z"/></svg>`
+    );
+    crownsWrap.appendChild(el);
+  }
+}
+function prizeFor(c){ return Math.min(BASE_PRIZE*Math.pow(2,c), MAX_PRIZE_CAP); }
+const bonusPct = () => BONUS_TABLE[Math.min(state.crowns, BONUS_TABLE.length - 1)];
+function setPrize(){
+  const p=prizeFor(state.crowns);
+  if(prizeEl) prizeEl.textContent=money(p);
+  const info=$('#bonusInfo');
+  if(!info) return;
+  const pct=Math.round(bonusPct()*100);
+  info.textContent = pct>0 ? ` o ${pct}% bonificación` : '';
+}
+function setSteps(n){
+  state.steps=n; stepsEl.textContent=n; progressLabel.style.display='inline-flex';
+}
+
+/* ===================== MODAL ===================== */
+function showModal(title, html, ok='Aceptar', cancel=null){
+  return new Promise(res=>{
+    mTitle.textContent=title;
+    mText.innerHTML=html;
+    mOk.textContent=ok||'Aceptar';
+    mOk.onclick=()=>done(true);
+    if(cancel){
+      mCancel.style.display='inline-flex';
+      mCancel.textContent=cancel;
+      mCancel.onclick=()=>done(false);
+    }else{
+      mCancel.style.display='none';
+      mCancel.onclick=null;
+    }
+    function done(v){
+      modal.classList.add('hidden');
+      mOk.onclick=mCancel.onclick=null;
+      res(v);
+    }
+    modal.classList.remove('hidden');
+  });
+}
+function openRawModal(title, html){
+  mTitle.textContent = title;
+  mText.innerHTML = html;
+  // oculto los botones del pie del modal
+  document.querySelector('#modal .mfoot').style.display = 'none';
+  modal.classList.remove('hidden');
+}
+/* ===================== RELOJ USUARIO ===================== */
+setInterval(()=>{
+  if(state.user){
+    userClock.textContent = `${state.user} · ${new Date().toLocaleString('es-AR',{hour12:false})}`;
+  }
+}, 1000);
+
+/* ===================== RULETA ===================== */
+const ctx = wheel.getContext('2d'); let angle = 0;
+const CATEGORIES = [
+  { id:'ciencia',  name:'Ciencia',        color:getCSS('--c1') },
+  { id:'deportes', name:'Deportes',       color:getCSS('--c2') },
+  { id:'historia', name:'Historia',       color:getCSS('--c3') },
+  { id:'arte',     name:'Arte',           color:getCSS('--c4') },
+  { id:'entretenimiento', name:'Entretenimiento', color:getCSS('--c5') },
+  { id:'geografia', name:'Geografía',     color:getCSS('--c6') },
+  { id:'corona',   name:'¡CORONA!',       color:getCSS('--c7') },
+];
+const N = CATEGORIES.length, ARC = (Math.PI*2)/N, POINTER = -Math.PI/2;
+const norm = a => (a%(2*Math.PI)+(2*Math.PI))%(2*Math.PI);
+function pointerIndex(){ const rel = norm(POINTER - angle); return Math.floor(rel/ARC)%N; }
+
+function drawWheel(){
+  const r=wheel.width/2; ctx.clearRect(0,0,wheel.width,wheel.height); ctx.lineWidth=2;
+  for(let i=0;i<N;i++){
+    const start=angle+i*ARC, end=start+ARC;
+    ctx.beginPath(); ctx.moveTo(r,r); ctx.arc(r,r,r-16,start,end); ctx.closePath();
+    ctx.fillStyle=CATEGORIES[i].color; ctx.fill(); ctx.strokeStyle="#fff"; ctx.stroke();
+    ctx.save(); ctx.translate(r,r); ctx.rotate(start+ARC/2); ctx.textAlign='right';
+    ctx.fillStyle='#1d2a38'; ctx.font='900 18px Nunito, system-ui'; ctx.fillText(CATEGORIES[i].name, r-32, 6); ctx.restore();
+  }
+}
+
+function spinWheel(){
+  if(state.spinning || state.answering || state.gameOver) return;
+  state.spinning=true; btnSpin.disabled=true;
+  const extraTurns = 6 + Math.random()*2;         // 6–8 vueltas
+  const dest = angle + extraTurns*2*Math.PI;
+  const startAngle=angle, delta=dest-startAngle;
+  const dur = 3600 + Math.random()*800;           // 3.6–4.4s
+  const t0=performance.now(), ease=x=>1-Math.pow(1-x,3);
+  (function anim(now){
+    const t=Math.min(1,(now-t0)/dur);
+    angle=startAngle+delta*ease(t); drawWheel();
+    if(t<1) requestAnimationFrame(anim); else {
+      angle = norm(angle); drawWheel();
+      afterSpin(pointerIndex());
+    }
+  })(t0);
+}
+
+function afterSpin(index){
+  state.spinning=false; btnSpin.disabled=false;
+  const cat = CATEGORIES[index];
+  state.currentCategory = cat;
+
+  interDot.style.background = cat.color;
+  interTitle.textContent   = cat.name;
+
+  if (cat.id === 'corona'){
+    interDesc.textContent = 'Pregunta de Corona: si respondés bien, ganás una coronita completa y se duplica tu premio.';
+    btnBegin.textContent  = 'Comenzar';
+  } else {
+    interDesc.textContent = 'Respondé 3 preguntas correctas para ganar una coronita.';
+    btnBegin.textContent  = 'Comenzar';
+    qDot.style.background = cat.color;
+    qCat.textContent      = cat.name;
+  }
+  setStage('inter');
+}
+
+/* ===================== BANCO DE PREGUNTAS ===================== */
+/* Estructura: { categoriaId: [ {q:"", a:["A","B","C","D"], c:indiceCorrecto, d:1..5 }, ... ] } */
+/* ===================== BANCO DE PREGUNTAS ===================== */
+const QUESTIONS = [
+// ===================== DEPORTES — 100 ítems =====================
+// Distribución: d1=18, d2=17, d3=17, d4=16, d5=16, d6=16
+
+// d=1 (Súper fácil) — 18
+{cat:"deportes",q:"¿Con qué deporte se asocia la Copa Mundial de la FIFA?",o:["Rugby","Críquet","Fútbol","Béisbol"],a:2,d:1},
+{cat:"deportes",q:"¿En qué deporte se encestan pelotas en un aro?",o:["Básquet","Tenis","Rugby","Vóley"],a:0,d:1},
+{cat:"deportes",q:"¿Con qué se golpea la pelota en el tenis?",o:["Palo","Raqueta","Pie","Guante"],a:1,d:1},
+{cat:"deportes",q:"¿Cuántos tiempos tiene un partido de fútbol?",o:["Cuatro","Tres","Dos","Uno"],a:2,d:1},
+{cat:"deportes",q:"¿En qué deporte se usa un bate y una pelota lanzada por un pitcher?",o:["Béisbol","Hockey","Fútbol","Handball"],a:0,d:1},
+{cat:"deportes",q:"¿Qué superficie es clásica en Roland Garros?",o:["Césped","Dura","Polvo de ladrillo","Madera"],a:2,d:1},
+{cat:"deportes",q:"¿Qué deporte se juega con palos y un hoyo?",o:["Hockey","Polo","Golf","Criquet"],a:2,d:1},
+{cat:"deportes",q:"¿En qué deporte se compite en 100 metros llanos?",o:["Natación","Atletismo","Ciclismo","Remo"],a:1,d:1},
+{cat:"deportes",q:"¿Cuál es el deporte nacional más popular de Argentina?",o:["Tenis","Rugby","Básquet","Fútbol"],a:3,d:1},
+{cat:"deportes",q:"¿Qué deporte se practica en una piscina con carriles?",o:["Waterpolo","Natación","Remo","Surf"],a:1,d:1},
+{cat:"deportes",q:"¿Qué parte del cuerpo no se puede usar en fútbol (jugadores de campo)?",o:["Cabeza","Pecho","Manos","Piernas"],a:2,d:1},
+{cat:"deportes",q:"¿Qué deporte se practica con tabla en olas?",o:["Snowboard","Skate","Surf","Esquí"],a:2,d:1},
+{cat:"deportes",q:"¿Cómo se llama el deporte de patear una pelota entre dos H en rugby?",o:["Conversión","Gol de campo","Drop","Try"],a:3,d:1},
+{cat:"deportes",q:"¿En qué deporte hay saques, recepciones y remates sobre una red?",o:["Bádminton","Vóley","Tenis","Squash"],a:1,d:1},
+{cat:"deportes",q:"¿Qué se intenta derribar en el bowling?",o:["Conos","Palos","Pinos","Cubos"],a:2,d:1},
+{cat:"deportes",q:"¿Cuál es el deporte de la Fórmula 1?",o:["Motociclismo","Automovilismo","Karting","Rally"],a:1,d:1},
+{cat:"deportes",q:"¿Qué deporte olímpico usa una barra con discos?",o:["Gimnasia artística","Levantamiento de pesas","Judo","Halterofilia"],a:3,d:1},
+{cat:"deportes",q:"¿En qué deporte se usa un arco y flechas?",o:["Esgrima","Tiro con arco","Pentatlón","Biatlón"],a:1,d:1},
+
+// d=2 (Fácil) — 17
+{cat:"deportes",q:"¿Cuántos jugadores por equipo hay en cancha en básquet?",o:["5","6","7","8"],a:0,d:2},
+{cat:"deportes",q:"¿Qué selección ganó la Copa del Mundo 2010?",o:["Alemania","España","Brasil","Italia"],a:1,d:2},
+{cat:"deportes",q:"¿Cómo se llama el torneo de tenis sobre césped más famoso?",o:["Roland Garros","Wimbledon","US Open","Australian Open"],a:1,d:2},
+{cat:"deportes",q:"¿Cuál es el máximo torneo de selecciones en Sudamérica?",o:["Eurocopa","Copa América","Concacaf Nations","Copa Africana"],a:1,d:2},
+{cat:"deportes",q:"¿En qué ciudad nació el básquetbol?",o:["Springfield (EE.UU.)","Toronto","Londres","Madrid"],a:0,d:2},
+{cat:"deportes",q:"¿Qué equipo de fútbol juega de local en La Bombonera?",o:["River Plate","Boca Juniors","San Lorenzo","Racing"],a:1,d:2},
+{cat:"deportes",q:"¿Qué distancia tiene una maratón?",o:["21 km","30 km","42,195 km","50 km"],a:2,d:2},
+{cat:"deportes",q:"¿Qué selección ganó el Mundial 1998?",o:["Brasil","Francia","Alemania","Argentina"],a:1,d:2},
+{cat:"deportes",q:"¿Qué deporte incluye kata y kumite?",o:["Taekwondo","Karate","Judo","Aikido"],a:1,d:2},
+{cat:"deportes",q:"¿Qué prueba de ciclismo se corre en Francia durante julio?",o:["Giro","Vuelta","Tour de Francia","Clásica San Sebastián"],a:2,d:2},
+{cat:"deportes",q:"¿Cómo se llama el trofeo del Super Bowl?",o:["Heisman","Lombardi","Larry O'Brien","Stanley"],a:1,d:2},
+{cat:"deportes",q:"¿En qué deporte se usa una máscara y un florete?",o:["Esgrima","Boxeo","Taekwondo","Kendo"],a:0,d:2},
+{cat:"deportes",q:"¿Qué deporte profesional se juega en la NBA?",o:["Béisbol","Básquet","Hockey hielo","Fútbol americano"],a:1,d:2},
+{cat:"deportes",q:"¿Qué deporte tiene estilos libre y grecorromano?",o:["Lucha","Judo","Karate","Taekwondo"],a:0,d:2},
+{cat:"deportes",q:"¿Qué país organiza el torneo de tenis Australian Open?",o:["EE.UU.","Reino Unido","Australia","Nueva Zelanda"],a:2,d:2},
+{cat:"deportes",q:"¿Qué se marca al convertir en rugby?",o:["Set","Gol","Try","Touchdown"],a:2,d:2},
+{cat:"deportes",q:"¿Qué club argentino es conocido como 'El Millonario'?",o:["Independiente","Racing","River Plate","Estudiantes"],a:2,d:2},
+
+// d=3 (Intermedio) — 17
+{cat:"deportes",q:"¿Qué selección ganó más Copas del Mundo de fútbol?",o:["Brasil","Alemania","Italia","Argentina"],a:0,d:3},
+{cat:"deportes",q:"¿Quién tiene más títulos de Grand Slam en singles masculino (era abierta)?",o:["Federer","Nadal","Djokovic","Sampras"],a:2,d:3},
+{cat:"deportes",q:"¿Cuál es el récord de 100 m masculino (World Athletics, Bolt)?",o:["9.63","9.58","9.69","9.72"],a:1,d:3},
+{cat:"deportes",q:"¿Qué país ganó el primer Mundial de fútbol (1930)?",o:["Uruguay","Argentina","Brasil","Italia"],a:0,d:3},
+{cat:"deportes",q:"¿Qué equipo ganó más Copas Libertadores?",o:["Boca Juniors","Independiente","Peñarol","River Plate"],a:1,d:3},
+{cat:"deportes",q:"¿En qué ciudad se juegan los Juegos Olímpicos de invierno conocidos por 1994?",o:["Nagano","Lillehammer","Turín","Calgary"],a:1,d:3},
+{cat:"deportes",q:"¿Qué tenista argentina ganó Roland Garros 1990?",o:["Sabatini","Dulko","Pérez Roldán","Podoroska"],a:0,d:3},
+{cat:"deportes",q:"¿Qué selección ganó la Eurocopa 2016?",o:["Francia","Portugal","Alemania","España"],a:1,d:3},
+{cat:"deportes",q:"¿Qué boxeador fue apodado 'Manos de Piedra'?",o:["Ali","Durán","Tyson","Pacquiao"],a:1,d:3},
+{cat:"deportes",q:"¿Qué club europeo ganó la 'Décima' en 2014?",o:["Barcelona","Real Madrid","Bayern","Liverpool"],a:1,d:3},
+{cat:"deportes",q:"¿Qué piloto argentino ganó 5 títulos de F1?",o:["Reutemann","Fangio","Di Palma","Baldi"],a:1,d:3},
+{cat:"deportes",q:"¿Qué país domina históricamente el hockey sobre césped femenino?",o:["Argentina","Países Bajos","Alemania","Australia"],a:1,d:3},
+{cat:"deportes",q:"¿Qué selección ganó la Copa América 2021?",o:["Brasil","Argentina","Colombia","Uruguay"],a:1,d:3},
+{cat:"deportes",q:"¿En qué deporte se usa 'scrum' y 'line-out'?",o:["Rugby","Fútbol americano","Waterpolo","Handball"],a:0,d:3},
+{cat:"deportes",q:"¿Qué corredor ganó 7 Tours (luego desposeídos)?",o:["Induráin","Armstrong","Froome","Hinault"],a:1,d:3},
+{cat:"deportes",q:"¿Qué equipo de la NHL ganó más Stanley Cups?",o:["Canadiens","Maple Leafs","Red Wings","Bruins"],a:0,d:3},
+{cat:"deportes",q:"¿Qué país aloja el circuito de Monza?",o:["Francia","Italia","España","Mónaco"],a:1,d:3},
+
+// d=4 (Medio difícil) — 16
+{cat:"deportes",q:"¿Qué leyenda del básquet es apodada 'Air'?",o:["Jordan","Bryant","James","Johnson"],a:0,d:4},
+{cat:"deportes",q:"¿Qué nadador es el máximo medallista olímpico?",o:["Phelps","Spitz","Thorpe","Dressel"],a:0,d:4},
+{cat:"deportes",q:"¿Qué selección ganó el Mundial 2006?",o:["Italia","Francia","Brasil","Alemania"],a:0,d:4},
+{cat:"deportes",q:"¿En qué club europeo debutó profesionalmente Messi?",o:["PSG","Barcelona","Newell's","Espanyol"],a:1,d:4},
+{cat:"deportes",q:"¿Qué país ganó el primer Mundial de Rugby (1987)?",o:["Australia","Inglaterra","Nueva Zelanda","Sudáfrica"],a:2,d:4},
+{cat:"deportes",q:"¿Qué Grand Slam se juega en superficie dura en EE.UU.?",o:["Australian Open","US Open","Roland Garros","Wimbledon"],a:1,d:4},
+{cat:"deportes",q:"¿Qué selección ganó la Copa América 1993?",o:["Brasil","Uruguay","Argentina","Colombia"],a:2,d:4},
+{cat:"deportes",q:"¿Qué atleta estableció 9.63 en 100 m en Londres 2012?",o:["Bolt","Blake","Gatlin","Powell"],a:0,d:4},
+{cat:"deportes",q:"¿Qué club ganó la Intercontinental 1984 con Bianchi DT?",o:["Boca Juniors","Vélez","Estudiantes","Independiente"],a:3,d:4},
+{cat:"deportes",q:"¿Qué franquicia tiene más títulos NBA?",o:["Bulls","Celtics","Warriors","Lakers"],a:1,d:4},
+{cat:"deportes",q:"¿Qué selección de handball masculino domina Europa?",o:["España","Dinamarca","Francia","Alemania"],a:2,d:4},
+{cat:"deportes",q:"¿Qué tenista ganó el Golden Slam (1988)?",o:["Graf","Serena","Navratilova","Hingis"],a:0,d:4},
+{cat:"deportes",q:"¿Qué corredor apodado 'El Caníbal' ganó 5 Tours?",o:["Merckx","Anquetil","Hinault","Froome"],a:0,d:4},
+{cat:"deportes",q:"¿En qué ciudad está el circuito urbano de Fórmula 1 de Mónaco?",o:["Niza","Mónaco","Marsella","Cannes"],a:1,d:4},
+{cat:"deportes",q:"¿Qué selección ganó el Mundial Femenino 2019?",o:["EE.UU.","Países Bajos","Alemania","Suecia"],a:0,d:4},
+{cat:"deportes",q:"¿Qué país ganó el oro olímpico de fútbol en 2008 y 2021?",o:["Brasil","España","Argentina","México"],a:2,d:4},
+
+// d=5 (Difícil) — 16
+{cat:"deportes",q:"¿Qué jugador marcó el 'Gol del Siglo' en 1986?",o:["Pelé","Maradona","Kempes","Caniggia"],a:1,d:5},
+{cat:"deportes",q:"¿Qué equipo ganó invicto la Premier 2003-04?",o:["Chelsea","Manchester Utd","Arsenal","Liverpool"],a:2,d:5},
+{cat:"deportes",q:"¿Qué selección ganó el Mundial 1958 con Pelé?",o:["Brasil","Uruguay","Alemania","Inglaterra"],a:0,d:5},
+{cat:"deportes",q:"¿Quién ganó 6 títulos mundiales de F1 (antes de 2020)?",o:["Vettel","Hamilton","Prost","Senna"],a:1,d:5},
+{cat:"deportes",q:"¿Qué club ganó la Libertadores 2018 en Madrid?",o:["River Plate","Boca Juniors","Gremio","Palmeiras"],a:0,d:5},
+{cat:"deportes",q:"¿Qué selección ganó la Euro 2004 (sorpresa)?",o:["Grecia","Portugal","Chequia","Turquía"],a:0,d:5},
+{cat:"deportes",q:"¿Qué boxeador es 'Money' y campeón invicto?",o:["Pacquiao","Mayweather Jr.","Canelo","Golovkin"],a:1,d:5},
+{cat:"deportes",q:"¿Qué país ganó Rugby World Cup 2019?",o:["Inglaterra","Sudáfrica","Nueva Zelanda","Gales"],a:1,d:5},
+{cat:"deportes",q:"¿Qué nadadora argentina fue campeona mundial en 400m y 800m (2002)",o:["Crismanich","Delfina Pignatiello","Georgina Bardach","Meolans"],a:2,d:5},
+{cat:"deportes",q:"¿Qué balonmanista francés es múltiple MVP mundial?",o:["Karabatic","Omeyer","Abalo","Guigou"],a:0,d:5},
+{cat:"deportes",q:"¿Qué club ostenta más Champions League?",o:["Milan","Barcelona","Bayern","Real Madrid"],a:3,d:5},
+{cat:"deportes",q:"¿Qué selección ganó la Copa América 2011?",o:["Uruguay","Paraguay","Brasil","Argentina"],a:0,d:5},
+{cat:"deportes",q:"¿Qué atleta bajó los 19.20 en 200 m (mundo)?",o:["Bolt","Michael Johnson","Blake","Gatlin"],a:0,d:5},
+{cat:"deportes",q:"¿Qué tenista ganó 8 Wimbledon (récord masculino)?",o:["Federer","Nadal","Djokovic","Sampras"],a:0,d:5},
+{cat:"deportes",q:"¿Qué piloto posee más poles históricas en F1?",o:["Schumacher","Hamilton","Senna","Vettel"],a:1,d:5},
+{cat:"deportes",q:"¿Qué país ganó el Mundial Sub-20 2005 con Messi MVP?",o:["Brasil","Argentina","España","México"],a:1,d:5},
+
+// d=6 (Imposible) — 16
+{cat:"deportes",q:"¿Qué club ganó la primera Copa Intercontinental (1960)?",o:["Benfica","Peñarol","Real Madrid","Santos"],a:1,d:6},
+{cat:"deportes",q:"¿Quién fue el máximo goleador del Mundial 1954?",o:["Kocsis","Puskás","Rahn","Fontaine"],a:0,d:6},
+{cat:"deportes",q:"¿Qué país logró el 'Triplete' Euro–Mundial–Euro 2008-12?",o:["Alemania","España","Italia","Francia"],a:1,d:6},
+{cat:"deportes",q:"¿Qué equipo ganó la primera Copa Libertadores (1960)?",o:["Peñarol","Bahía","San Lorenzo","Palmeiras"],a:0,d:6},
+{cat:"deportes",q:"¿Qué tenista masculino logró el 'Golden Masters' (todos los Masters 1000)?",o:["Federer","Djokovic","Nadal","Agassi"],a:1,d:6},
+{cat:"deportes",q:"¿Qué selección ganó la primera Eurocopa (1960)?",o:["URSS","España","Yugoslavia","Alemania"],a:0,d:6},
+{cat:"deportes",q:"¿Cuál fue la sede del primer Mundial de Rugby (1987)?",o:["Sudáfrica","Australia y Nueva Zelanda","Inglaterra","Francia"],a:1,d:6},
+{cat:"deportes",q:"¿Qué club ganó la primera Copa de Europa (1956)?",o:["Real Madrid","Milan","Reims","Barcelona"],a:0,d:6},
+{cat:"deportes",q:"¿Qué corredor ganó 5 Tours y 5 Giros (récord combinado)?",o:["Hinault","Coppi","Anquetil","Merckx"],a:3,d:6},
+{cat:"deportes",q:"¿Qué selección ganó el primer Mundial Femenino (1991)?",o:["Noruega","EE.UU.","China","Alemania"],a:1,d:6},
+{cat:"deportes",q:"¿Cuál es el récord mundial de maratón masculino (Kipchoge, 2019 Berlín)?",o:["2:01:39","2:01:09","2:02:40","2:01:59"],a:0,d:6},
+{cat:"deportes",q:"¿Qué jugador marcó 5 goles en un partido de Champions 2014/15 para el Real Madrid?",o:["Benzema","Bale","Ronaldo","Di María"],a:2,d:6},
+{cat:"deportes",q:"¿Qué selección ganó 5 oros consecutivos en hockey césped femenino (Mundial/JO)?",o:["Países Bajos","Alemania","Australia","Argentina"],a:0,d:6},
+{cat:"deportes",q:"¿Qué club ganó la Intercontinental 1967 en un tercer partido desempate en Montevideo?",o:["Celtic","Racing Club","Estudiantes","Santos"],a:1,d:6},
+{cat:"deportes",q:"¿Qué levantador estableció 263 kg en clean & jerk (récord absoluto antiguo)?",o:["Suleymanglu","Reza Zadeh","Taranenko","Dimas"],a:2,d:6},
+{cat:"deportes",q:"¿Qué selección ganó el primer Mundial Sub-17 (1985)?",o:["Nigeria","Brasil","México","Alemania"],a:0,d:6},
+
+  // ===== Nivel 1 (18 preguntas) =====
+  {q:"¿Cuál es el planeta más cercano al Sol?",o:["Mercurio","Venus","Marte","Tierra"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué gas respiramos para vivir?",o:["Oxígeno","Hidrógeno","Nitrógeno","Helio"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Cuál es el órgano más grande del cuerpo humano?",o:["Piel","Corazón","Hígado","Pulmones"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Cuál es el planeta azul?",o:["Tierra","Urano","Neptuno","Saturno"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué animal pone huevos?",o:["Gallina","Perro","Vaca","Gato"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué astro ilumina la Tierra?",o:["El Sol","La Luna","Marte","Venus"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Cuál es el hueso más largo del cuerpo?",o:["Fémur","Tibia","Radio","Húmero"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué líquido bombea el corazón?",o:["Sangre","Agua","Linfa","Oxígeno"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Cuántos sentidos básicos tiene el ser humano?",o:["5","4","6","7"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué planeta tiene anillos?",o:["Saturno","Marte","Venus","Mercurio"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué estudia la botánica?",o:["Plantas","Animales","Rocas","Estrellas"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué gas exhalamos al respirar?",o:["Dióxido de carbono","Oxígeno","Nitrógeno","Hidrógeno"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Cuál es el planeta rojo?",o:["Marte","Venus","Júpiter","Neptuno"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Cómo se llama el satélite natural de la Tierra?",o:["Luna","Sol","Marte","Titán"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué es el ADN?",o:["Material genético","Proteína","Hormona","Grasa"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Cuál es el metal de las monedas de 1 peso antiguas?",o:["Cobre","Oro","Plata","Hierro"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué astro da la luz de la Luna?",o:["El Sol","La Tierra","Marte","Venus"],a:0,d:1,cat:"Ciencia"},
+  {q:"¿Qué animal es un mamífero?",o:["Perro","Gallina","Serpiente","Sapo"],a:0,d:1,cat:"Ciencia"},
+
+  // ===== Nivel 2 (17 preguntas) =====
+  {q:"¿Cuál es el planeta más grande del sistema solar?",o:["Júpiter","Saturno","Tierra","Urano"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Cuál es el elemento químico del símbolo H?",o:["Hidrógeno","Helio","Hierro","Mercurio"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Qué gas abunda en el aire?",o:["Nitrógeno","Oxígeno","Dióxido de carbono","Hidrógeno"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Qué parte del cuerpo produce insulina?",o:["Páncreas","Hígado","Corazón","Riñón"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Qué fuerza nos mantiene en la Tierra?",o:["Gravedad","Inercia","Magnetismo","Energía"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Cuál es la velocidad de la luz?",o:["300.000 km/s","150.000 km/s","1.000 km/s","30.000 km/s"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Qué hueso protege el cerebro?",o:["Cráneo","Fémur","Pelvis","Costillas"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Cuál es el estado del agua al congelarse?",o:["Sólido","Líquido","Gas","Plasma"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Cómo se llama el proceso de plantas que producen oxígeno?",o:["Fotosíntesis","Digestión","Respiración","Fermentación"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Cuál es el símbolo químico del oro?",o:["Au","Ag","O","Fe"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Qué órgano bombea la sangre?",o:["Corazón","Cerebro","Riñón","Pulmón"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Qué científico formuló la teoría de la evolución?",o:["Darwin","Newton","Einstein","Galileo"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Cuál es la capa gaseosa que rodea la Tierra?",o:["Atmósfera","Litosfera","Hidrosfera","Biosfera"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Cuál es el planeta más lejano del Sol?",o:["Neptuno","Urano","Plutón","Saturno"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Qué rama estudia los animales?",o:["Zoología","Botánica","Geología","Astronomía"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Qué mide un termómetro?",o:["Temperatura","Presión","Velocidad","Tiempo"],a:0,d:2,cat:"Ciencia"},
+  {q:"¿Qué vitamina se produce al sol?",o:["Vitamina D","Vitamina A","Vitamina C","Vitamina B12"],a:0,d:2,cat:"Ciencia"},
+
+  // ===== Nivel 3 (17 preguntas) =====
+  {q:"¿Cuál es el planeta con más lunas conocidas?",o:["Saturno","Júpiter","Urano","Neptuno"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué científico formuló las leyes del movimiento?",o:["Newton","Einstein","Galileo","Tesla"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué órgano filtra la sangre?",o:["Riñón","Pulmón","Corazón","Estómago"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué partícula tiene carga negativa?",o:["Electrón","Protón","Neutrón","Ión"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué aparato mide la presión atmosférica?",o:["Barómetro","Termómetro","Altímetro","Anemómetro"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué elemento es esencial para la hemoglobina?",o:["Hierro","Calcio","Magnesio","Cobre"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué planeta gira más rápido sobre su eje?",o:["Júpiter","Saturno","Tierra","Marte"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué gas protege la Tierra de radiación ultravioleta?",o:["Ozono","Oxígeno","Nitrógeno","Hidrógeno"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué estudia la geología?",o:["Rocas","Plantas","Animales","Clima"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué es el Big Bang?",o:["Origen del universo","Explosión de estrellas","Colisión de galaxias","Formación de planetas"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué inventó Alexander Fleming?",o:["Penicilina","Teléfono","Lámpara","Imprenta"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué capa de la Tierra es líquida?",o:["Núcleo externo","Núcleo interno","Manto","Corteza"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué energía producen los paneles solares?",o:["Eléctrica","Química","Mecánica","Nuclear"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué es un fósil?",o:["Resto de organismos antiguos","Roca volcánica","Cristal","Gema"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué científico formuló la teoría heliocéntrica?",o:["Copérnico","Aristóteles","Einstein","Ptolomeo"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué glóbulo defiende contra infecciones?",o:["Blanco","Rojo","Plaqueta","Plasma"],a:0,d:3,cat:"Ciencia"},
+  {q:"¿Qué célula transporta oxígeno?",o:["Glóbulo rojo","Glóbulo blanco","Plaqueta","Neurona"],a:0,d:3,cat:"Ciencia"},
+
+  // ===== Nivel 4 (16 preguntas) =====
+  {q:"¿Qué unidad mide la intensidad de corriente?",o:["Amperio","Voltio","Ohmio","Vatio"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué planeta tiene el día más corto?",o:["Júpiter","Mercurio","Marte","Venus"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué rama estudia los fósiles?",o:["Paleontología","Arqueología","Geología","Biología"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué parte del ojo regula la luz?",o:["Pupila","Retina","Córnea","Cristalino"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué científico descubrió América sin querer?",o:["Colón","Darwin","Einstein","Galileo"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué planeta es famoso por su gran mancha roja?",o:["Júpiter","Saturno","Neptuno","Urano"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué ácido está en el estómago?",o:["Clorhídrico","Acético","Sulfurico","Cítrico"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué rama estudia los virus?",o:["Virología","Bacteriología","Inmunología","Genética"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué célula transmite impulsos eléctricos?",o:["Neurona","Plaqueta","Fibra muscular","Glóbulo blanco"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué científico propuso la relatividad?",o:["Einstein","Newton","Tesla","Planck"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué metal es líquido a temperatura ambiente?",o:["Mercurio","Plomo","Cobre","Zinc"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué órgano produce bilis?",o:["Hígado","Riñón","Páncreas","Intestino"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué planeta es más pequeño?",o:["Mercurio","Marte","Venus","Plutón"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué energía mueve las turbinas eólicas?",o:["Viento","Agua","Sol","Calor"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué unidad mide la potencia?",o:["Watio","Voltio","Amperio","Julio"],a:0,d:4,cat:"Ciencia"},
+  {q:"¿Qué rama estudia el ADN?",o:["Genética","Física","Química","Geología"],a:0,d:4,cat:"Ciencia"},
+
+  // ===== Nivel 5 (16 preguntas) =====
+  {q:"¿Qué partícula compone el núcleo junto al protón?",o:["Neutrón","Electrón","Fotón","Quark"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué científico descubrió la gravedad?",o:["Newton","Einstein","Galileo","Kepler"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué es una supernova?",o:["Explosión estelar","Planeta gigante","Galaxia","Agujero negro"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué órgano produce insulina?",o:["Páncreas","Hígado","Bazo","Intestino"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué ciencia estudia el clima?",o:["Meteorología","Astronomía","Geología","Química"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué unidad mide la frecuencia?",o:["Hertz","Julio","Newton","Amperio"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué son los quarks?",o:["Partículas elementales","Planetas","Moléculas","Ondas"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué rama estudia los seres vivos?",o:["Biología","Física","Química","Astronomía"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué rama estudia el espacio?",o:["Astronomía","Biología","Geografía","Química"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué nombre recibe el ADN vegetal?",o:["Cloroplasto DNA","Núcleo DNA","Mitocondrial DNA","Cromosoma"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué instrumento mide terremotos?",o:["Sismógrafo","Barómetro","Hidrómetro","Sonar"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué unidad mide la energía?",o:["Julio","Vatio","Amperio","Hertz"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué planeta es gaseoso?",o:["Júpiter","Marte","Tierra","Venus"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué metal es conductor excelente?",o:["Cobre","Plástico","Vidrio","Madera"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué teoría propuso Darwin?",o:["Evolución","Relatividad","Heliocentrismo","Gravedad"],a:0,d:5,cat:"Ciencia"},
+  {q:"¿Qué rama estudia los átomos?",o:["Química","Biología","Astronomía","Geología"],a:0,d:5,cat:"Ciencia"},
+
+  // ===== Nivel 6 (16 preguntas) =====
+  {q:"¿Qué es un agujero negro?",o:["Región donde nada escapa","Estrella","Planeta","Supernova"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué partícula no tiene carga?",o:["Neutrón","Protón","Electrón","Positrón"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué teoría explica el origen del universo?",o:["Big Bang","Evolución","Heliocentrismo","Creacionismo"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué planeta tiene mayor gravedad?",o:["Júpiter","Saturno","Neptuno","Tierra"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué ciencia estudia los genes?",o:["Genética","Química","Astronomía","Física"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué son los rayos cósmicos?",o:["Partículas de alta energía","Luz solar","Ondas de radio","Auroras"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué científico desarrolló la mecánica cuántica?",o:["Planck","Newton","Darwin","Tesla"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué planeta tiene los vientos más rápidos?",o:["Neptuno","Saturno","Marte","Venus"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué rama estudia el universo en su conjunto?",o:["Cosmología","Geología","Meteorología","Biología"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué elemento es base del ADN?",o:["Carbono","Hierro","Sodio","Nitrógeno"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué científico descubrió la radiactividad?",o:["Becquerel","Einstein","Curie","Newton"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué unidad mide la presión?",o:["Pascal","Julio","Hertz","Newton"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué partícula media la fuerza electromagnética?",o:["Fotón","Gluón","Bosón W","Neutrino"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué científico es conocido como padre de la genética?",o:["Mendel","Darwin","Pasteur","Curie"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué rama estudia los terremotos?",o:["Sismología","Climatología","Hidrología","Zoología"],a:0,d:6,cat:"Ciencia"},
+  {q:"¿Qué partículas forman la luz?",o:["Fotones","Electrones","Protones","Neutrones"],a:0,d:6,cat:"Ciencia"},
+
+
+  // ===== Nivel 1 (18) =====
+  {q:"¿Quién fue el ‘Padre de la Patria’ en Argentina?",o:["San Martín","Belgrano","Rivadavia","Sarmiento"],a:0,d:1,cat:"Historia"},
+  {q:"¿En qué año llegó Cristóbal Colón a América?",o:["1492","1506","1519","1485"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué civilización construyó las pirámides de Giza?",o:["Egipcia","Maya","Inca","Griega"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué país inició la Revolución Industrial?",o:["Inglaterra","Francia","Alemania","Italia"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué bandera llevó José de San Martín en los Andes?",o:["La argentina","La chilena","La peruana","La española"],a:0,d:1,cat:"Historia"},
+  {q:"¿Quién fue el primer emperador romano?",o:["Augusto","César","Nerón","Trajano"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué ciudad antigua fue enterrada por el Vesubio?",o:["Pompeya","Atenas","Cartago","Roma"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué cultura construyó Machu Picchu?",o:["Inca","Azteca","Maya","Olmeca"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué país tuvo a Napoleón como líder?",o:["Francia","España","Alemania","Rusia"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué muralla famosa está en Asia?",o:["La Muralla China","El Muro de Berlín","La Muralla de Adriano","La Línea Maginot"],a:0,d:1,cat:"Historia"},
+  {q:"¿Quién fue Simón Bolívar?",o:["Libertador","Rey","Papa","Pirata"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué civilización usó jeroglíficos?",o:["Egipcia","Romana","Vikinga","Persa"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué nave se hundió en 1912?",o:["Titanic","Lusitania","Bismarck","Santa María"],a:0,d:1,cat:"Historia"},
+  {q:"¿En qué ciudad está el Coliseo?",o:["Roma","Atenas","París","Estambul"],a:0,d:1,cat:"Historia"},
+  {q:"¿Quién lideró la independencia estadounidense?",o:["George Washington","Abraham Lincoln","Jefferson","Franklin"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué imperio construyó calzadas por Europa?",o:["Romano","Macedonio","Persa","Mongol"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué reina británica fue llamada ‘la reina virgen’?",o:["Isabel I","Victoria","Ana","María I"],a:0,d:1,cat:"Historia"},
+  {q:"¿Qué pueblo navegante fundó Cartago?",o:["Fenicios","Griegos","Celtas","Hititas"],a:0,d:1,cat:"Historia"},
+
+  // ===== Nivel 2 (17) =====
+  {q:"¿Qué revolución estalló en Francia en 1789?",o:["Revolución Francesa","Reforma Protestante","Comuna de París","Revolución de 1848"],a:0,d:2,cat:"Historia"},
+  {q:"¿Quién cruzó los Alpes con elefantes?",o:["Aníbal","César","Alejandro","Atila"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué acuerdo terminó la Primera Guerra Mundial?",o:["Tratado de Versalles","Trianón","Utrecht","Westfalia"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué imperio tuvo a Gengis Kan?",o:["Mongol","Romano","Otomano","Bizantino"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué nave dio la primera vuelta al mundo?",o:["Victoria","Santa María","Mayflower","Endeavour"],a:0,d:2,cat:"Historia"},
+  {q:"¿Quién escribió ‘El Príncipe’?",o:["Maquiavelo","Rousseau","Hobbes","Locke"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué ciudad dividió un muro hasta 1989?",o:["Berlín","Viena","Praga","Varsovia"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué civilización mesoamericana jugaba al juego de pelota?",o:["Maya","Inca","Chibcha","Mapuche"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué ruta unía China con el Mediterráneo?",o:["Ruta de la Seda","Camino Real","Ruta del Ámbar","Vía Apia"],a:0,d:2,cat:"Historia"},
+  {q:"¿Quién fue el ‘Libertador’ de Chile y Perú junto a San Martín?",o:["Bernardo O'Higgins","Sucre","Belgrano","Artigas"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué ciudad fue capital del Imperio Bizantino?",o:["Constantinopla","Atenas","Roma","Antioquía"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué pueblo construyó Stonehenge?",o:["Britanos prehistóricos","Romanos","Sajones","Vikingos"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué guerra enfrentó a Atenas y Esparta?",o:["Guerra del Peloponeso","Guerras Médicas","Guerras Púnicas","Guerra de Troya"],a:0,d:2,cat:"Historia"},
+  {q:"¿Quién unificó Alemania en 1871?",o:["Bismarck","Guillermo I","Mazzini","Metternich"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué ciudad fundó Rómulo según la leyenda?",o:["Roma","Cartago","Siracusa","Tarento"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué líder sudafricano luchó contra el apartheid?",o:["Nelson Mandela","Desmond Tutu","De Klerk","Biko"],a:0,d:2,cat:"Historia"},
+  {q:"¿Qué cultura precolombina talló cabezas colosales?",o:["Olmeca","Tolteca","Zapoteca","Moche"],a:0,d:2,cat:"Historia"},
+
+  // ===== Nivel 3 (17) =====
+  {q:"¿Qué batalla de 1815 selló la caída de Napoleón?",o:["Waterloo","Austerlitz","Borodinó","Trafalgar"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué dinastía china construyó el Ejército de Terracota?",o:["Qin","Han","Tang","Ming"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué ciudad arrasó el Vesubio en el 79 d.C.?",o:["Pompeya","Herculano","Nápoles","Ostia"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué documento limitó el poder del rey inglés en 1215?",o:["Magna Carta","Hábeas Corpus","Bill of Rights","Petition of Right"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué batalla frenó a los árabes en 732?",o:["Poitiers","Hastings","Agincourt","Tours"],a:0,d:3,cat:"Historia"},
+  {q:"¿Quién lideró la Larga Marcha en China?",o:["Mao Zedong","Sun Yat-sen","Chiang Kai-shek","Zhou Enlai"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué civilización edificó Teotihuacán?",o:["Se desconoce con certeza","Azteca","Tolteca","Olmeca"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué tratado dividió el mundo entre España y Portugal (1494)?",o:["Tordesillas","Zaragoza","Alcaçovas","Utrecht"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué rey inglés tuvo seis esposas?",o:["Enrique VIII","Eduardo VI","Carlos I","Ricardo III"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué ciudad fue capital del Imperio carolingio?",o:["Aquisgrán","París","Colonia","Metz"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué revolución comenzó en 1917?",o:["Revolución Rusa","Revolución Mexicana","Revolución China","Revolución Cubana"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué cultura desarrolló quipus para registrar datos?",o:["Inca","Maya","Nazca","Tiahuanaco"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué guerra se libró entre 1955 y 1975 en Asia?",o:["Vietnam","Corea","Indochina","Afganistán"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué líder egipcio nacionalizó el canal de Suez?",o:["Nasser","Sadat","Mubarak","Faruk"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué expedición completó Elcano?",o:["Primera vuelta al mundo","Descubrimiento de Brasil","Paso del Noroeste","Llegada al Pacífico"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué cultura mesopotámica creó la escritura cuneiforme?",o:["Sumeria","Asiria","Babilonia","Hitita"],a:0,d:3,cat:"Historia"},
+  {q:"¿Qué ciudad fue llamada Leningrado?",o:["San Petersburgo","Moscú","Kiev","Ereván"],a:0,d:3,cat:"Historia"},
+
+  // ===== Nivel 4 (16) =====
+  {q:"¿Qué emperador romano legalizó el cristianismo?",o:["Constantino","Diocleciano","Teodosio","Trajano"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué tratado fundó la ONU en 1945?",o:["Carta de San Francisco","Tratado de París","Acta de Londres","Pacto de Río"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué civilización dominó Creta en la Edad del Bronce?",o:["Minoica","Micénica","Doria","Etrusca"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué batalla detuvo a los mongoles en Europa en 1241?",o:["Legnica","Manzikert","Mohács","Varna"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué líder azteca recibió a Cortés?",o:["Moctezuma II","Itzcóatl","Ahuitzotl","Cuauhtémoc"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué conferencia dividió Alemania tras 1945?",o:["Yalta","Potsdam","Teherán","Múnich"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué rey macedonio conquistó Persia?",o:["Alejandro Magno","Filipo II","Casandro","Demetrio"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué guerra enfrentó a nórdicos y británicos en 1066?",o:["Hastings","Stamford Bridge","Bannockburn","Culloden"],a:1,d:4,cat:"Historia"},
+  {q:"¿Qué reforma dividió el cristianismo occidental?",o:["Protestante","Gregoria","Cluniacense","Tridentina"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué imperio tuvo a Justiniano I?",o:["Bizantino","Otomano","Romano","Persa"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué caudillo uruguayo fue clave en el Río de la Plata?",o:["Artigas","Lavalleja","Rivera","Oribe"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué ciudad africana fue rival de Roma en las Guerras Púnicas?",o:["Cartago","Alejandría","Menfis","Numidia"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué revolución terminó con los zares?",o:["Rusa de 1917","Francesa","China de 1911","Cultural"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué dinastía inauguró la unificación de China en 221 a.C.?",o:["Qin","Han","Zhou","Tang"],a:0,d:4,cat:"Historia"},
+  {q:"¿Qué tratado de 1648 cerró la Guerra de los Treinta Años?",o:["Westfalia","Augsburgo","Cateau-Cambrésis","Nimega"],a:0,d:4,cat:"Historia"},
+  {q:"¿Quién lideró el ‘Terror’ en la Revolución Francesa?",o:["Robespierre","Danton","Marat","Saint-Just"],a:0,d:4,cat:"Historia"},
+
+  // ===== Nivel 5 (16) =====
+  {q:"¿Qué cultura andina usó geoglifos en Nazca?",o:["Nazca","Moche","Tiahuanaco","Chimú"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué batalla naval de 1805 afianzó a Gran Bretaña?",o:["Trafalgar","Jutlandia","Abukir","Gravelinas"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué código legal compiló Hammurabi?",o:["Código de Hammurabi","Doce Tablas","Edictos de Asoka","Lex Salica"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué líder turco fundó la república laica en 1923?",o:["Atatürk","Abdülhamid II","Enver Pasha","Ismet Inönü"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué guerra enfrentó a Inglaterra y Francia 1337–1453?",o:["Cien Años","Rosas","Sucesión","Siete Años"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué tratado dividió Polonia en el siglo XVIII?",o:["Particiones de Polonia","Utrecht","Campo Formio","Amiens"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué emperador romano promovió el Edicto de Milán?",o:["Constantino","Teodosio","Marco Aurelio","Adriano"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué liga comercial dominó el Báltico medieval?",o:["Hansa","Liga Itálica","Liga Aquea","Liga de Delos"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué batalla de 1571 frenó al Imperio Otomano?",o:["Lepanto","Arginuso","Actium","Navarino"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué rebelión campesina sacudió Alemania 1524–1525?",o:["Guerra de los Campesinos","Fronda","Jacquerie","Comuneros"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué líder caribeño triunfó en 1959 en Cuba?",o:["Fidel Castro","Batista","Che Guevara","Raúl Castro"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué tratado cerró la Guerra de Sucesión Española?",o:["Utrecht","Ryswick","Westfalia","Basilea"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué ruta marítima circunvaló África hacia India?",o:["Ruta del Cabo","Paso del Noroeste","Ruta de la Plata","Galeón de Manila"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué emperador romano escribió ‘Meditaciones’?",o:["Marco Aurelio","Séneca","Trajano","Nerva"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué guerra colonial enfrentó a Francia y Argelia?",o:["Guerra de Argelia","Indochina","Suez","Ifni"],a:0,d:5,cat:"Historia"},
+  {q:"¿Qué confederación andina enfrentó a los incas en el norte?",o:["Quitus-Cara","Wari","Muisca","Tiwanaku"],a:0,d:5,cat:"Historia"},
+
+  // ===== Nivel 6 (16) =====
+  {q:"¿Qué ciudad hitita fue capital imperial?",o:["Hattusa","Nínive","Uruk","Susa"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué rey asirio creó bibliotecas en Nínive?",o:["Asurbanipal","Sargón II","Tiglatpileser III","Asarhaddón"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué dinastía persa instauró Darío I?",o:["Aquemenida","Sasánida","Seléucida","Parta"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué concilio definió el dogma trinitario en 325?",o:["Nicea I","Calcedonia","Éfeso","Constantinopla I"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué tratado de 1494 fue confirmado en 1529?",o:["Zaragoza","Granada","Campo Formio","Villafranca"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué emperador romano implantó el ‘Dominado’?",o:["Diocleciano","Caracalla","Constantino","Valeriano"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué batalla aqueménida perdió Jerjes I ante los griegos?",o:["Salamina","Maratón","Plateas","Termópilas"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué confederación articuló el comercio germánico medieval?",o:["Hansa","Liga Lombarda","Liga Renana","Liga Suaba"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué edicto (212) extendió ciudadanía en Roma?",o:["Constitutio Antoniniana","Edicto de Tesalónica","Edicto de Precios","Lex Hortensia"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué reforma militar implementó Mario en Roma?",o:["Profesionalizó legiones","Prohibió cohortes","Creó falanges","Abolió centurias"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué reino africano venció a Italia en Adwa (1896)?",o:["Etiopía","Zulú","Ashanti","Buganda"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué emperador bizantino codificó el derecho romano?",o:["Justinian I","Heraclio","León III","Basilio II"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué tratado puso fin a la Guerra de los Treinta Años?",o:["Westfalia","Cateau-Cambrésis","Nimega","Rijswijk"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué reino preincaico levantó Tiwanaku?",o:["Tiwanaku","Wari","Chimú","Chachapoya"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué cultura del Indo tenía la ciudad de Mohenjo-Daro?",o:["Harappa","Hitita","Urartia","Sumeria"],a:0,d:6,cat:"Historia"},
+  {q:"¿Qué emperador romano derrotó a Clodoveo en Vouillé? (trampa)",o:["Ninguno, ganó Clodoveo","Teodorico","Anastasio","Zenón"],a:0,d:6,cat:"Historia"},
+
+  // ===== Nivel 1 (18) =====
+  {q:"¿Quién pintó la Mona Lisa?",o:["Leonardo da Vinci","Picasso","Van Gogh","Dalí"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué instrumento tiene teclas blancas y negras?",o:["Piano","Violín","Guitarra","Flauta"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué famoso teatro está en Buenos Aires?",o:["Teatro Colón","Gran Rex","San Martín","Ópera"],a:0,d:1,cat:"Arte"},
+  {q:"¿Quién pintó ‘La noche estrellada’?",o:["Van Gogh","Picasso","Monet","Dalí"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué instrumento tiene 6 cuerdas?",o:["Guitarra","Violín","Piano","Bajo"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué famoso museo está en París?",o:["Louvre","Prado","MET","Tate"],a:0,d:1,cat:"Arte"},
+  {q:"¿Quién esculpió el David?",o:["Miguel Ángel","Donatello","Bernini","Cellini"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué arte usan hilos y agujas?",o:["Bordado","Pintura","Escultura","Música"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué pintor inventó el cubismo?",o:["Picasso","Dalí","Miró","Cézanne"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué famoso teatro está en Milán?",o:["La Scala","Ópera de Viena","Covent Garden","Metropolitan"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué pintor impresionista pintó nenúfares?",o:["Monet","Manet","Renoir","Degas"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué instrumento se toca con arco?",o:["Violín","Piano","Clarinete","Trompeta"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué pintor español pintó ‘Guernica’?",o:["Picasso","Velázquez","Dalí","Miró"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué arte usa cámaras?",o:["Fotografía","Escultura","Música","Dibujo"],a:0,d:1,cat:"Arte"},
+  {q:"¿Quién pintó la Capilla Sixtina?",o:["Miguel Ángel","Leonardo","Rafael","Caravaggio"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué danza clásica se originó en Francia?",o:["Ballet","Tango","Salsa","Flamenco"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué instrumento es de viento?",o:["Flauta","Piano","Guitarra","Batería"],a:0,d:1,cat:"Arte"},
+  {q:"¿Qué pintor neerlandés se cortó la oreja?",o:["Van Gogh","Rembrandt","Vermeer","Rubens"],a:0,d:1,cat:"Arte"},
+
+  // ===== Nivel 2 (17) =====
+  {q:"¿Qué escritor escribió ‘Don Quijote’?",o:["Cervantes","Lope de Vega","Quevedo","Góngora"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué estilo arquitectónico tiene arcos puntiagudos?",o:["Gótico","Románico","Clásico","Barroco"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué pintor fue famoso por relojes derretidos?",o:["Dalí","Picasso","Miró","Tàpies"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué famoso museo está en Madrid?",o:["Prado","Louvre","MET","Hermitage"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué dramaturgo escribió ‘Hamlet’?",o:["Shakespeare","Molière","Goethe","Ibsen"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué estilo tiene columnas dóricas y jónicas?",o:["Clásico griego","Gótico","Barroco","Renacentista"],a:0,d:2,cat:"Arte"},
+  {q:"¿Quién pintó ‘Las Meninas’?",o:["Velázquez","Goya","El Greco","Zurbarán"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué poeta argentino escribió ‘Martín Fierro’?",o:["José Hernández","Sarmiento","Almafuerte","Borges"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué pintor holandés pintó ‘La ronda de noche’?",o:["Rembrandt","Vermeer","Van Gogh","Mondrian"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué danza nació en el Río de la Plata?",o:["Tango","Milonga","Cumbia","Samba"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué pintor francés fue líder del impresionismo?",o:["Monet","Renoir","Manet","Degas"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué escultor hizo ‘El Pensador’?",o:["Rodin","Bernini","Miguel Ángel","Canova"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué novelista ruso escribió ‘Guerra y Paz’?",o:["Tolstói","Dostoievski","Pushkin","Chéjov"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué pintor flamenco fue maestro del barroco?",o:["Rubens","Brueghel","Van Eyck","Vermeer"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué género musical nació en Nueva Orleans?",o:["Jazz","Rock","Reggae","Blues"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué compositor escribió la 5ª sinfonía?",o:["Beethoven","Mozart","Bach","Haydn"],a:0,d:2,cat:"Arte"},
+  {q:"¿Qué pintor holandés pintó interiores luminosos?",o:["Vermeer","Rembrandt","Rubens","Van Gogh"],a:0,d:2,cat:"Arte"},
+
+  // ===== Nivel 3 (17) =====
+  {q:"¿Qué escritor argentino escribió ‘El Aleph’?",o:["Borges","Cortázar","Sabato","Hernández"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué arquitecto diseñó la Sagrada Familia?",o:["Gaudí","Calatrava","Moneo","Foster"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué compositor escribió ‘Las cuatro estaciones’?",o:["Vivaldi","Bach","Mozart","Handel"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué pintor fue líder del surrealismo?",o:["Dalí","Miró","Picasso","Magritte"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué poeta escribió ‘Veinte poemas de amor’?",o:["Neruda","Mistral","Pizarnik","Benedetti"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué pintor fue precursor del cubismo?",o:["Cézanne","Picasso","Braque","Gris"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué escultor renacentista hizo el Moisés?",o:["Miguel Ángel","Donatello","Ghiberti","Cellini"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué escritor francés creó ‘Los Miserables’?",o:["Victor Hugo","Balzac","Flaubert","Zola"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué corriente buscó la espontaneidad en pintura?",o:["Impresionismo","Cubismo","Expresionismo","Futurismo"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué pintor español pintó ‘El entierro del Conde de Orgaz’?",o:["El Greco","Zurbarán","Velázquez","Murillo"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué instrumento es de percusión?",o:["Batería","Violín","Flauta","Arpa"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué compositor escribió el Réquiem inacabado?",o:["Mozart","Haydn","Beethoven","Brahms"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué estilo artístico antecedió al renacimiento?",o:["Gótico","Barroco","Rococó","Romántico"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué dramaturgo griego escribió tragedias?",o:["Sófocles","Homero","Platón","Aristóteles"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué pintor francés pintó bailarinas?",o:["Degas","Renoir","Monet","Manet"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué arquitecto estadounidense diseñó la Casa de la Cascada?",o:["Frank Lloyd Wright","Le Corbusier","Mies van der Rohe","Sullivan"],a:0,d:3,cat:"Arte"},
+  {q:"¿Qué escritor ruso creó ‘Crimen y Castigo’?",o:["Dostoievski","Tolstói","Chejov","Pushkin"],a:0,d:3,cat:"Arte"},
+
+  // ===== Nivel 4 (16) =====
+  {q:"¿Qué pintor italiano pintó ‘La Última Cena’?",o:["Leonardo da Vinci","Rafael","Caravaggio","Tiziano"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué compositor compuso la ópera ‘La Traviata’?",o:["Verdi","Puccini","Rossini","Donizetti"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué escultor barroco hizo el Éxtasis de Santa Teresa?",o:["Bernini","Canova","Cellini","Miguel Ángel"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué poeta española ganó el Nobel en 1945?",o:["Gabriela Mistral","Alfonsina Storni","Pizarnik","Concha Méndez"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué pintor español fue famoso por majas y fusilamientos?",o:["Goya","Velázquez","Zurbarán","Murillo"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué estilo arquitectónico usó contrafuertes y vitrales?",o:["Gótico","Románico","Renacentista","Barroco"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué novelista inglés escribió ‘Oliver Twist’?",o:["Dickens","Shaw","Austen","Shelley"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué pintor flamenco pintó escenas de campesinos?",o:["Brueghel","Rubens","Van Eyck","Rembrandt"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué compositor alemán quedó sordo?",o:["Beethoven","Mozart","Haydn","Bach"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué escultor griego talló el Discóbolo?",o:["Mirón","Policleto","Fidias","Escopas"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué dramaturgo noruego escribió ‘Casa de Muñecas’?",o:["Ibsen","Strindberg","Pirandello","Brecht"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué pintor francés pintó nenúfares?",o:["Monet","Manet","Degas","Seurat"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué escritor inglés creó ‘Frankenstein’?",o:["Mary Shelley","Byron","Blake","Coleridge"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué pintor mexicano plasmó murales sociales?",o:["Rivera","Siqueiros","Orozco","Tamayo"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué poeta argentino escribió ‘Fervor de Buenos Aires’?",o:["Borges","Sabato","Girondo","Marechal"],a:0,d:4,cat:"Arte"},
+  {q:"¿Qué pintor francés inventó el puntillismo?",o:["Seurat","Cézanne","Monet","Pissarro"],a:0,d:4,cat:"Arte"},
+
+  // ===== Nivel 5 (16) =====
+  {q:"¿Qué escritor colombiano ganó el Nobel en 1982?",o:["García Márquez","Mutis","Vargas Llosa","Allende"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué pintor holandés pintó ‘La lechera’?",o:["Vermeer","Rembrandt","Van Gogh","Rubens"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué arquitecto suizo-francés diseñó la Villa Savoye?",o:["Le Corbusier","Foster","Wright","Mies"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué compositor ruso compuso ‘El lago de los cisnes’?",o:["Chaikovski","Rimski-Kórsakov","Stravinski","Músorgski"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué escritor peruano escribió ‘La ciudad y los perros’?",o:["Vargas Llosa","Bryce Echenique","Arguedas","Ribeyro"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué pintor italiano pintó la Escuela de Atenas?",o:["Rafael","Leonardo","Miguel Ángel","Tiziano"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué movimiento artístico buscaba lo irracional?",o:["Surrealismo","Expresionismo","Cubismo","Futurismo"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué poeta uruguayo escribió ‘Tabaré’?",o:["Zorrilla de San Martín","Benedetti","Idea Vilariño","Onetti"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué compositor alemán compuso el Mesías?",o:["Handel","Bach","Haydn","Beethoven"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué pintor flamenco pintó ‘El matrimonio Arnolfini’?",o:["Van Eyck","Brueghel","Rubens","Vermeer"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué escritor chileno escribió ‘La casa de los espíritus’?",o:["Isabel Allende","Mistral","Neruda","Donoso"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué escultor griego hizo el Partenón?",o:["Fidias","Mirón","Policleto","Praxíteles"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué pintor francés fue precursor del fauvismo?",o:["Matisse","Gauguin","Cézanne","Renoir"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué poeta española escribió ‘En las orillas del Sar’?",o:["Rosalía de Castro","Santa Teresa","Storni","Mistral"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué dramaturgo español escribió ‘La vida es sueño’?",o:["Calderón de la Barca","Lope de Vega","Cervantes","Quevedo"],a:0,d:5,cat:"Arte"},
+  {q:"¿Qué pintor noruego pintó ‘El grito’?",o:["Munch","Klee","Kandinski","Mondrian"],a:0,d:5,cat:"Arte"},
+
+  // ===== Nivel 6 (16) =====
+  {q:"¿Qué compositor alemán escribió ‘El anillo del nibelungo’?",o:["Wagner","Brahms","Beethoven","Mahler"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué pintor español fue precursor del surrealismo?",o:["Miró","Dalí","Picasso","Gris"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué escritor irlandés escribió ‘Ulises’?",o:["James Joyce","Yeats","Wilde","Swift"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué escultor italiano diseñó la columnata de San Pedro?",o:["Bernini","Borromini","Miguel Ángel","Cellini"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué pintor austriaco pintó ‘El beso’?",o:["Klimt","Schiele","Kokoschka","Moser"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué compositor ruso compuso ‘La consagración de la primavera’?",o:["Stravinski","Chaikovski","Prokófiev","Shostakóvich"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué novelista estadounidense escribió ‘Moby Dick’?",o:["Herman Melville","Twain","Hawthorne","Poe"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué pintor español fue apodado el ‘Caballero de la mano en el pecho’?",o:["El Greco","Velázquez","Zurbarán","Murillo"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué poeta escribió ‘Hojas de hierba’?",o:["Walt Whitman","Emily Dickinson","Frost","Pound"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué escritor francés escribió ‘Madame Bovary’?",o:["Flaubert","Zola","Balzac","Stendhal"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué pintor francés fundó el impresionismo?",o:["Monet","Renoir","Degas","Manet"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué arquitecto brasileño diseñó Brasilia?",o:["Oscar Niemeyer","Costa","Pelli","Calatrava"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué dramaturgo alemán escribió ‘Fausto’?",o:["Goethe","Schiller","Brecht","Lessing"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué pintor italiano fue maestro de Caravaggio?",o:["Caravaggio no tuvo maestro formal","Tiziano","Veronés","Tintoretto"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué compositor austriaco compuso ‘La flauta mágica’?",o:["Mozart","Haydn","Beethoven","Schubert"],a:0,d:6,cat:"Arte"},
+  {q:"¿Qué escritor checo creó ‘La metamorfosis’?",o:["Kafka","Hesse","Mann","Musil"],a:0,d:6,cat:"Arte"},
+
+
+  // ===== Nivel 1 (18) =====
+  {q:"¿Cuál es la capital de Argentina?",o:["Buenos Aires","Córdoba","Rosario","Mendoza"],a:0,d:1,cat:"Geografía"},
+  {q:"¿En qué continente está Egipto?",o:["África","Asia","Europa","Oceanía"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Cuál es el río más largo del mundo?",o:["Nilo","Amazonas","Yangtsé","Misisipi"],a:1,d:1,cat:"Geografía"},
+  {q:"¿Qué océano baña las costas de Chile?",o:["Pacífico","Atlántico","Índico","Ártico"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Madrid?",o:["España","Italia","Portugal","Francia"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Cuál es la montaña más alta del mundo?",o:["Everest","K2","Kilimanjaro","Aconcagua"],a:0,d:1,cat:"Geografía"},
+  {q:"¿En qué continente está Brasil?",o:["América","África","Asia","Oceanía"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Qué país tiene forma de bota?",o:["Italia","España","Grecia","Francia"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Qué desierto está en el norte de África?",o:["Sahara","Gobi","Atacama","Kalahari"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Francia?",o:["París","Marsella","Lyon","Niza"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Qué país limita con Argentina al oeste?",o:["Chile","Brasil","Uruguay","Paraguay"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Cuál es la capital de México?",o:["Ciudad de México","Guadalajara","Monterrey","Puebla"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Qué continente está al sur de Europa?",o:["África","Asia","América","Oceanía"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Qué mar baña las costas de Italia?",o:["Mediterráneo","Rojo","Negro","Báltico"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Cuál es el país más grande del mundo?",o:["Rusia","China","EE.UU.","Canadá"],a:0,d:1,cat:"Geografía"},
+  {q:"¿En qué continente está Australia?",o:["Oceanía","Asia","Europa","América"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Tokio?",o:["Japón","Corea","China","Mongolia"],a:0,d:1,cat:"Geografía"},
+  {q:"¿Cuál es el país vecino de Portugal?",o:["España","Francia","Italia","Marruecos"],a:0,d:1,cat:"Geografía"},
+
+  // ===== Nivel 2 (17) =====
+  {q:"¿Qué cordillera recorre Sudamérica?",o:["Andes","Alpes","Rocosas","Himalaya"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Berlín?",o:["Alemania","Austria","Suiza","Polonia"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Perú?",o:["Lima","Cuzco","Quito","Arequipa"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué río pasa por Egipto?",o:["Nilo","Éufrates","Danubio","Amazonas"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Ottawa?",o:["Canadá","EE.UU.","Australia","Reino Unido"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué mar separa Europa de África?",o:["Mediterráneo","Rojo","Negro","Báltico"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué desierto se encuentra en China y Mongolia?",o:["Gobi","Sahara","Atacama","Kalahari"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Colombia?",o:["Bogotá","Medellín","Cali","Cartagena"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Pretoria?",o:["Sudáfrica","Nigeria","Egipto","Kenia"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué océano separa Europa de América?",o:["Atlántico","Pacífico","Índico","Ártico"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Cuál es el continente más poblado?",o:["Asia","Europa","África","América"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué volcán destruyó Pompeya?",o:["Vesubio","Etna","Stromboli","Krakatoa"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Canberra?",o:["Australia","Nueva Zelanda","Papúa","Fiyi"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué cordillera está en Europa?",o:["Alpes","Andes","Himalaya","Rocosas"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Chile?",o:["Santiago","Valparaíso","Antofagasta","Concepción"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué isla es la más grande del mundo?",o:["Groenlandia","Madagascar","Borneo","Nueva Guinea"],a:0,d:2,cat:"Geografía"},
+  {q:"¿Qué país africano tiene forma triangular?",o:["Egipto","Sudán","Sudáfrica","Kenia"],a:0,d:2,cat:"Geografía"},
+
+  // ===== Nivel 3 (17) =====
+  {q:"¿Cuál es la capital de Rusia?",o:["Moscú","San Petersburgo","Kiev","Minsk"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué río cruza Londres?",o:["Támesis","Danubio","Sena","Elba"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Cuál es la capital de India?",o:["Nueva Delhi","Bombay","Calcuta","Bangalore"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Atenas?",o:["Grecia","Italia","Turquía","Chipre"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué lago es el más grande de América del Sur?",o:["Titicaca","Maracaibo","Poopó","Argentino"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué país limita con EE.UU. al sur?",o:["México","Canadá","Belice","Guatemala"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Turquía?",o:["Ankara","Estambul","Esmirna","Bursa"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué desierto está en Chile?",o:["Atacama","Sahara","Kalahari","Sonora"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué cordillera está en Asia?",o:["Himalaya","Andes","Alpes","Rocosas"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Estocolmo?",o:["Suecia","Noruega","Finlandia","Dinamarca"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué océano está al este de África?",o:["Índico","Atlántico","Pacífico","Ártico"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué capital sudamericana está a mayor altura?",o:["La Paz","Quito","Bogotá","Caracas"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Noruega?",o:["Oslo","Estocolmo","Helsinki","Copenhague"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué país está dividido en cantones?",o:["Suiza","Austria","Bélgica","Países Bajos"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué isla europea pertenece a Dinamarca?",o:["Groenlandia","Islandia","Madeira","Córcega"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Nigeria?",o:["Abuya","Lagos","Kano","Port Harcourt"],a:0,d:3,cat:"Geografía"},
+  {q:"¿Qué río atraviesa París?",o:["Sena","Loira","Ródano","Tajo"],a:0,d:3,cat:"Geografía"},
+
+  // ===== Nivel 4 (16) =====
+  {q:"¿Qué país tiene como capital a Dublín?",o:["Irlanda","Islandia","Escocia","Inglaterra"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Cuál es la montaña más alta de América?",o:["Aconcagua","Denali","Popocatépetl","Cotopaxi"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Qué mar está en Rusia y Ucrania?",o:["Mar Negro","Mar Rojo","Mar Báltico","Mar Caspio"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Rumania?",o:["Sofía","Bucarest","Belgrado","Budapest"],a:1,d:2,cat:"Geografía"},
+  {q:"¿Qué país africano limita con España?",o:["Marruecos","Argelia","Túnez","Egipto"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Qué ciudad es capital de Canadá?",o:["Ottawa","Toronto","Vancouver","Montreal"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Qué río forma frontera entre EE.UU. y México?",o:["Bravo","Colorado","Misuri","Columbia"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Polonia?",o:["Varsovia","Cracovia","Gdansk","Poznan"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Qué desierto está en África austral?",o:["Kalahari","Sahara","Namib","Sahel"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Qué país asiático tiene como capital a Seúl?",o:["Corea del Sur","Corea del Norte","Japón","China"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Qué ciudad fue capital del Imperio Inca?",o:["Cuzco","Quito","Lima","Arequipa"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Finlandia?",o:["Helsinki","Oslo","Tallin","Estocolmo"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Qué isla es británica?",o:["Irlanda del Norte","Sicilia","Cerdeña","Madeira"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Pakistán?",o:["Islamabad","Karachi","Lahore","Peshawar"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Qué país es conocido como la tierra de los canguros?",o:["Australia","Sudáfrica","Nueva Zelanda","India"],a:0,d:4,cat:"Geografía"},
+  {q:"¿Qué océano rodea a Indonesia?",o:["Índico y Pacífico","Atlántico","Ártico","Báltico"],a:0,d:4,cat:"Geografía"},
+
+  // ===== Nivel 5 (16) =====
+  {q:"¿Qué capital africana se llama El Cairo?",o:["Egipto","Sudán","Argelia","Marruecos"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Bangkok?",o:["Tailandia","Vietnam","Myanmar","Laos"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué montaña divide Europa y Asia?",o:["Urales","Pirineos","Alpes","Cárpatos"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Marruecos?",o:["Rabat","Casablanca","Marrakech","Tánger"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Bruselas?",o:["Bélgica","Países Bajos","Luxemburgo","Suiza"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué desierto es el más seco del mundo?",o:["Atacama","Sahara","Gobi","Namib"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Corea del Norte?",o:["Pionyang","Seúl","Pekín","Tokio"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué ciudad fue capital del Imperio Otomano?",o:["Estambul","Ankara","Esmirna","Bursa"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Viena?",o:["Austria","Suiza","Hungría","Alemania"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué río pasa por París?",o:["Sena","Loira","Ródano","Garona"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Kenia?",o:["Nairobi","Dodoma","Kampala","Dar es-Salam"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué cordillera está en Norteamérica?",o:["Rocosas","Andes","Alpes","Pirineos"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Nueva Zelanda?",o:["Wellington","Auckland","Christchurch","Hamilton"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Teherán?",o:["Irán","Irak","Turquía","Siria"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Qué océano baña Madagascar?",o:["Índico","Pacífico","Atlántico","Ártico"],a:0,d:5,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Filipinas?",o:["Manila","Cebú","Davao","Quezón"],a:0,d:5,cat:"Geografía"},
+
+  // ===== Nivel 6 (16) =====
+  {q:"¿Qué país tiene como capital a Ulan Bator?",o:["Mongolia","Kazajistán","Kirguistán","Uzbekistán"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Islandia?",o:["Reikiavik","Oslo","Estocolmo","Helsinki"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Qué país africano tiene como capital a Addis Abeba?",o:["Etiopía","Sudán","Eritrea","Somalia"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Eslovenia?",o:["Liubliana","Zagreb","Belgrado","Bratislava"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Qué cordillera cruza Marruecos?",o:["Atlas","Andes","Alpes","Himalaya"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Kazajistán?",o:["Astaná","Almaty","Taskent","Bishkek"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Qué país africano tiene como capital a Dakar?",o:["Senegal","Mali","Níger","Guinea"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Croacia?",o:["Zagreb","Sarajevo","Belgrado","Podgorica"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Katmandú?",o:["Nepal","Bután","India","Pakistán"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Letonia?",o:["Riga","Vilna","Tallin","Minsk"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Asjabad?",o:["Turkmenistán","Uzbekistán","Kazajistán","Tayikistán"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Bielorrusia?",o:["Minsk","Vilna","Riga","Kiev"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Qué país tiene como capital a Yibuti?",o:["Yibuti","Eritrea","Somalia","Etiopía"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Armenia?",o:["Ereván","Bakú","Tiflis","Ankara"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Qué país africano tiene como capital a Bamako?",o:["Mali","Níger","Burkina Faso","Chad"],a:0,d:6,cat:"Geografía"},
+  {q:"¿Cuál es la capital de Sri Lanka?",o:["Sri Jayawardenapura Kotte","Colombo","Galle","Kandy"],a:0,d:6,cat:"Geografía"},
+
+  // ===== Nivel 1 (18) =====
+  {q:"¿Quién es el ratón más famoso de Disney?",o:["Mickey Mouse","Jerry","Speedy González","Pikachu"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué personaje amarillo vive en una piña bajo el mar?",o:["Bob Esponja","Homer","Minion","Patricio"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Quién es el ogro verde de DreamWorks?",o:["Shrek","Hulk","Fiona","Donkey"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué princesa de Disney tiene cabello largo y mágico?",o:["Rapunzel","Ariel","Jazmín","Elsa"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué superhéroe es Bruce Wayne?",o:["Batman","Superman","Iron Man","Flash"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué estudio creó a Woody y Buzz Lightyear?",o:["Pixar","DreamWorks","Disney","Sony"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Quién es el mejor amigo de Harry Potter?",o:["Ron Weasley","Draco Malfoy","Neville","Hagrid"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué personaje de Marvel lanza telarañas?",o:["Spider-Man","Iron Man","Thor","Hulk"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué película tiene un león llamado Simba?",o:["El Rey León","Madagascar","Tarzán","Bambi"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué personaje tiene un gorro rojo y barba blanca?",o:["Papá Noel","Mario","Dumbledore","Merlín"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Quién es el hermano de Luigi en Nintendo?",o:["Mario","Yoshi","Peach","Bowser"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué mago es profesor en Hogwarts?",o:["Dumbledore","Gandalf","Merlín","Voldemort"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué robot dice 'Hasta la vista, baby'?",o:["Terminator","R2-D2","Optimus Prime","Wall-E"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué pez azul ayuda a Marlin en Buscando a Nemo?",o:["Dory","Nemo","Bruce","Coral"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué saga tiene un anillo único?",o:["El Señor de los Anillos","Harry Potter","Star Wars","Narnia"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Quién canta 'Thriller'?",o:["Michael Jackson","Prince","Elvis Presley","Madonna"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué familia vive en Springfield?",o:["Los Simpson","Los Griffin","Los Picapiedra","Los Padrinos"],a:0,d:1,cat:"Entretenimiento"},
+  {q:"¿Qué Pokémon es amarillo y eléctrico?",o:["Pikachu","Charmander","Squirtle","Bulbasaur"],a:0,d:1,cat:"Entretenimiento"},
+
+  // ===== Nivel 2 (17) =====
+  {q:"¿Qué actor interpretó a Jack en Titanic?",o:["Leonardo DiCaprio","Brad Pitt","Tom Cruise","Keanu Reeves"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué película animada tiene a Elsa y Anna?",o:["Frozen","Moana","Encanto","Valiente"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Quién creó la saga Star Wars?",o:["George Lucas","Steven Spielberg","James Cameron","Ridley Scott"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué actor interpreta a Iron Man?",o:["Robert Downey Jr.","Chris Evans","Chris Hemsworth","Mark Ruffalo"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué serie tiene dragones y el Trono de Hierro?",o:["Game of Thrones","Vikings","The Witcher","The Crown"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué cantante colombiana canta 'Hips Don't Lie'?",o:["Shakira","Karol G","Paulina Rubio","Gloria Trevi"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué hechizo usaba Harry Potter para desarmar?",o:["Expelliarmus","Avada Kedavra","Lumos","Alohomora"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué villano de Marvel es hermano de Thor?",o:["Loki","Thanos","Ultron","Magneto"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué película tiene a Jack Sparrow?",o:["Piratas del Caribe","Hook","Peter Pan","Aladdín"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué actor hace de Wolverine?",o:["Hugh Jackman","Chris Hemsworth","Ryan Reynolds","Ben Affleck"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué superhéroe usa un escudo con estrella?",o:["Capitán América","Iron Man","Thor","Hawkeye"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué cantante es 'La Reina del Pop'?",o:["Madonna","Lady Gaga","Britney Spears","Katy Perry"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué saga tiene un personaje llamado Gandalf?",o:["El Señor de los Anillos","Harry Potter","Narnia","Star Wars"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué actor interpretó a Neo en Matrix?",o:["Keanu Reeves","Johnny Depp","Matt Damon","Tom Hanks"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué película ganó el Oscar a Mejor Película en 1994?",o:["Forrest Gump","Titanic","Pulp Fiction","Gladiador"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué serie animada tiene a Morty y Rick?",o:["Rick y Morty","Futurama","BoJack Horseman","South Park"],a:0,d:2,cat:"Entretenimiento"},
+  {q:"¿Qué personaje de Disney pierde su zapato?",o:["Cenicienta","Aurora","Blanca Nieves","Bella"],a:0,d:2,cat:"Entretenimiento"},
+
+  // ===== Nivel 3 (17) =====
+  {q:"¿Qué superhéroe es Clark Kent?",o:["Superman","Batman","Flash","Spider-Man"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué actor interpreta a Deadpool?",o:["Ryan Reynolds","Chris Pratt","Chris Evans","Paul Rudd"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué cantante fue apodado 'El Rey del Rock'?",o:["Elvis Presley","Michael Jackson","Frank Sinatra","Prince"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué película animada tiene juguetes que hablan?",o:["Toy Story","Cars","Shrek","Coco"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué director filmó 'Jurassic Park'?",o:["Steven Spielberg","James Cameron","Ridley Scott","George Lucas"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué villano es enemigo de Batman?",o:["Joker","Lex Luthor","Thanos","Magneto"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué cantante británica cantó 'Rolling in the Deep'?",o:["Adele","Amy Winehouse","Dua Lipa","Ellie Goulding"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué película tiene a Buzz Lightyear?",o:["Toy Story","Cars","Up","Monsters Inc."],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué saga mágica tiene a Hermione?",o:["Harry Potter","Percy Jackson","Narnia","El Señor de los Anillos"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué actor hizo de Jack Sparrow?",o:["Johnny Depp","Orlando Bloom","Harrison Ford","Russell Crowe"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué serie tiene zombies?",o:["The Walking Dead","Lost","Breaking Bad","Dexter"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué cantante coreano popularizó 'Gangnam Style'?",o:["PSY","BTS","G-Dragon","Rain"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué película tiene un genio azul?",o:["Aladdín","Hércules","Encantada","Shrek"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué actriz interpretó a Hermione Granger?",o:["Emma Watson","Emma Stone","Natalie Portman","Keira Knightley"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué película popularizó a Olaf el muñeco de nieve?",o:["Frozen","Moana","Encanto","Valiente"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué superhéroe es conocido como 'El Hombre Araña'?",o:["Spider-Man","Superman","Batman","Flash"],a:0,d:3,cat:"Entretenimiento"},
+  {q:"¿Qué cantante canadiense popularizó 'Baby'?",o:["Justin Bieber","Drake","Shawn Mendes","The Weeknd"],a:0,d:3,cat:"Entretenimiento"},
+
+  // ===== Nivel 4 (16) =====
+  {q:"¿Qué película de Pixar tiene a un robot que limpia basura?",o:["Wall-E","Cars","Up","Ratatouille"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué actor interpretó a Jack Sparrow?",o:["Johnny Depp","Orlando Bloom","Brad Pitt","Matt Damon"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué director filmó 'Avatar'?",o:["James Cameron","Spielberg","Ridley Scott","Peter Jackson"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué cantante puertorriqueño popularizó 'Despacito'?",o:["Luis Fonsi","Daddy Yankee","Bad Bunny","Ozuna"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué actor interpretó a Thor?",o:["Chris Hemsworth","Tom Hiddleston","Henry Cavill","Jason Momoa"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué película tiene un ogro verde?",o:["Shrek","Monsters Inc.","Kung Fu Panda","Madagascar"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué cantante estadounidense cantó 'Like a Virgin'?",o:["Madonna","Britney Spears","Lady Gaga","Katy Perry"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué serie tiene dragones y reinos?",o:["Game of Thrones","Vikings","The Witcher","Spartacus"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué actor interpretó a Wolverine?",o:["Hugh Jackman","Ryan Reynolds","Chris Evans","Ben Affleck"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué película animada tiene a un panda que lucha?",o:["Kung Fu Panda","Shrek","Mulan","Cars"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué cantante ganó Eurovisión con 'Toy'?",o:["Netta","ABBA","Loreen","Celine Dion"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué superhéroe usa un martillo mágico?",o:["Thor","Iron Man","Hulk","Capitán América"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué película animada tiene a un cocinero ratón?",o:["Ratatouille","Zootopia","Up","Frozen"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué cantante fue 'La Reina del Tex-Mex'?",o:["Selena Quintanilla","Shakira","Gloria Estefan","Paulina Rubio"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué actor interpreta a Neo en Matrix?",o:["Keanu Reeves","Matt Damon","Christian Bale","Brad Pitt"],a:0,d:4,cat:"Entretenimiento"},
+  {q:"¿Qué película musical tiene a Sandy y Danny?",o:["Grease","Mamma Mia","La La Land","Chicago"],a:0,d:4,cat:"Entretenimiento"},
+
+  // ===== Nivel 5 (16) =====
+  {q:"¿Qué cantante canadiense es apodado 'La Voz'?",o:["Celine Dion","Shania Twain","Alanis Morissette","Avril Lavigne"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué director filmó la trilogía de El Señor de los Anillos?",o:["Peter Jackson","Spielberg","Ridley Scott","Lucas"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué cantante fue apodada 'La Reina del Soul'?",o:["Aretha Franklin","Whitney Houston","Tina Turner","Diana Ross"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué película popularizó a un extraterrestre que dice 'ET teléfono casa'?",o:["E.T.","Alien","Star Wars","Avatar"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué cantante británico fue parte de Queen?",o:["Freddie Mercury","Elton John","David Bowie","Phil Collins"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué actriz interpretó a Katniss Everdeen?",o:["Jennifer Lawrence","Emma Stone","Scarlett Johansson","Anne Hathaway"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué película tiene a un niño que se queda solo en Navidad?",o:["Mi Pobre Angelito","Elf","Grinch","Polar Express"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué cantante ganó Eurovisión con 'Euphoria'?",o:["Loreen","ABBA","Conchita Wurst","Celine Dion"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué actor interpretó a Gladiador?",o:["Russell Crowe","Mel Gibson","Tom Cruise","Gerard Butler"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué película tiene dinosaurios en un parque?",o:["Jurassic Park","King Kong","Godzilla","Ice Age"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué cantante británica fue apodada 'La Duquesa del Pop'?",o:["Dua Lipa","Amy Winehouse","Kylie Minogue","Rita Ora"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué serie tiene a Sheldon Cooper?",o:["The Big Bang Theory","Friends","How I Met Your Mother","Community"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué cantante fue parte de los Beatles?",o:["John Lennon","David Bowie","Mick Jagger","Elvis Presley"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué actor hace de Hulk en Avengers?",o:["Mark Ruffalo","Chris Evans","Tom Hiddleston","Jeremy Renner"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué película musical tiene a ABBA como base?",o:["Mamma Mia","Grease","Chicago","La La Land"],a:0,d:5,cat:"Entretenimiento"},
+  {q:"¿Qué cantante puertorriqueño canta 'Gasolina'?",o:["Daddy Yankee","Don Omar","Bad Bunny","Wisin"],a:0,d:5,cat:"Entretenimiento"},
+
+  // ===== Nivel 6 (16) =====
+  {q:"¿Qué director creó Pulp Fiction?",o:["Quentin Tarantino","Spielberg","Scorsese","Coppola"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué cantante británico fue apodado 'El Duque Blanco'?",o:["David Bowie","Elton John","Mick Jagger","Phil Collins"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué película mexicana ganó el Oscar en 2019?",o:["Roma","Amores Perros","El laberinto del fauno","Babel"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué cantante estadounidense fue apodada 'La Reina del Country'?",o:["Dolly Parton","Reba McEntire","Shania Twain","Faith Hill"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué película de Pixar tiene a emociones como personajes?",o:["Intensamente","Coco","Up","Soul"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué rapero es esposo de Beyoncé?",o:["Jay-Z","Kanye West","Dr. Dre","Eminem"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué película argentina ganó el Oscar?",o:["El secreto de sus ojos","Relatos Salvajes","Nueve Reinas","El hijo de la novia"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué cantante canadiense canta 'Blinding Lights'?",o:["The Weeknd","Drake","Justin Bieber","Shawn Mendes"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué director filmó 'Inception'?",o:["Christopher Nolan","Ridley Scott","Tarantino","Spielberg"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué serie cuenta la historia de Pablo Escobar?",o:["Narcos","El Patrón del Mal","Breaking Bad","La Reina del Sur"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué cantante británico fue apodado 'Sir'?",o:["Elton John","Paul McCartney","Rod Stewart","Phil Collins"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué película tiene a Thanos como villano?",o:["Avengers: Infinity War","Avengers","Iron Man","Thor"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué cantante ganó un Oscar por 'Shallow'?",o:["Lady Gaga","Adele","Beyoncé","Madonna"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué serie tiene a Eleven?",o:["Stranger Things","Dark","The OA","Sense8"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué actor interpretó al Joker en 'The Dark Knight'?",o:["Heath Ledger","Jared Leto","Joaquin Phoenix","Jack Nicholson"],a:0,d:6,cat:"Entretenimiento"},
+  {q:"¿Qué cantante británica cantó 'Someone Like You'?",o:["Adele","Amy Winehouse","Leona Lewis","Jessie J"],a:0,d:6,cat:"Entretenimiento"},
+
+
+  // ===== Nivel 1 (18) =====
+  {q:"¿Cuál es la capital de Suecia?",o:["Estocolmo","Oslo","Helsinki","Copenhague"],a:0,d:1,cat:"Corona"},
+  {q:"¿Quién escribió 'Don Quijote de la Mancha'?",o:["Cervantes","Shakespeare","Quevedo","Lope de Vega"],a:0,d:1,cat:"Corona"},
+  {q:"¿En qué país está la Torre Eiffel?",o:["Francia","Italia","España","Alemania"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué océano es el más grande?",o:["Pacífico","Atlántico","Índico","Ártico"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué planeta es el 'planeta rojo'?",o:["Marte","Venus","Júpiter","Saturno"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué año llegó Colón a América?",o:["1492","1500","1485","1510"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué país limita con Portugal?",o:["España","Francia","Italia","Grecia"],a:0,d:2,cat:"Corona"},
+  {q:"¿Cuál es la capital de Canadá?",o:["Ottawa","Toronto","Montreal","Vancouver"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué cordillera separa España y Francia?",o:["Pirineos","Alpes","Andes","Cárpatos"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué río atraviesa El Cairo?",o:["Nilo","Tigris","Éufrates","Amazonas"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué científico formuló la ley de la gravedad?",o:["Newton","Einstein","Galileo","Kepler"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué gas respiramos principalmente?",o:["Nitrógeno","Oxígeno","Hidrógeno","CO₂"],a:0,d:1,cat:"Corona"},
+  {q:"¿Cuál es la capital de Japón?",o:["Tokio","Kioto","Osaka","Nara"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué país es 'la tierra del sol naciente'?",o:["Japón","China","Corea","Vietnam"],a:0,d:1,cat:"Corona"},
+  {q:"¿Cuál es el lago más grande de África?",o:["Tanganica","Victoria","Malaui","Chad"],a:1,d:2,cat:"Corona"},
+  {q:"¿Quién fue el primer hombre en la Luna?",o:["Neil Armstrong","Buzz Aldrin","Yuri Gagarin","Collins"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué ciudad antigua sepultó el Vesubio?",o:["Pompeya","Roma","Cartago","Atenas"],a:0,d:1,cat:"Corona"},
+  {q:"¿Qué país ganó el Mundial 1986?",o:["Argentina","Brasil","Alemania","Italia"],a:0,d:1,cat:"Corona"},
+
+  // ===== Nivel 2 (17) =====
+  {q:"¿Cuál es la capital de Hungría?",o:["Praga","Varsovia","Budapest","Bucarest"],a:2,d:2,cat:"Corona"},
+  {q:"¿Quién escribió 'La Odisea'?",o:["Homero","Virgilio","Esquilo","Heródoto"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué ciudad estuvo dividida por un muro hasta 1989?",o:["Berlín","Viena","Praga","Budapest"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué país inventó la pólvora?",o:["China","India","Alemania","Japón"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué continente tiene más países?",o:["África","Europa","Asia","América"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué país lideró la carrera espacial junto a EE.UU.?",o:["URSS","China","Japón","Alemania"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué civilización construyó las pirámides de Guiza?",o:["Egipcia","Maya","Inca","Mesopotámica"],a:0,d:2,cat:"Corona"},
+  {q:"¿En qué país está Machu Picchu?",o:["Perú","México","Ecuador","Colombia"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué mar baña la costa de Israel?",o:["Mediterráneo","Rojo","Negro","Caspio"],a:0,d:2,cat:"Corona"},
+  {q:"¿Cuál es la capital de Australia?",o:["Canberra","Sídney","Melbourne","Perth"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué río atraviesa Londres?",o:["Támesis","Sena","Loira","Rin"],a:0,d:2,cat:"Corona"},
+  {q:"¿Quién fue derrotado en Waterloo?",o:["Napoleón","Wellington","Blücher","Nelson"],a:0,d:2,cat:"Corona"},
+  {q:"¿Cuál es la capital de Suiza?",o:["Zúrich","Ginebra","Berna","Basilea"],a:2,d:2,cat:"Corona"},
+  {q:"¿Qué idioma se habla en Brasil?",o:["Portugués","Español","Inglés","Francés"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué océano baña la costa argentina?",o:["Atlántico","Pacífico","Índico","Ártico"],a:0,d:2,cat:"Corona"},
+  {q:"¿Quién escribió '1984'?",o:["George Orwell","Aldous Huxley","Ray Bradbury","Kafka"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué país se conoce como Persia?",o:["Irán","Irak","Turquía","Afganistán"],a:0,d:2,cat:"Corona"},
+
+  // ===== Nivel 3 (17) =====
+  {q:"¿Quién descubrió la penicilina?",o:["Alexander Fleming","Louis Pasteur","Marie Curie","Darwin"],a:0,d:3,cat:"Corona"},
+  {q:"¿Cuál es el mejor casino online",o:["ninguno","ninguno","el de ustedes","ninguno"],a:2,d:3,cat:"Corona"},
+  {q:"¿Quién escribió 'El príncipe'?",o:["Maquiavelo","Platón","Aristóteles","Rousseau"],a:0,d:3,cat:"Corona"},
+  {q:"¿En qué año comenzó la Segunda Guerra Mundial?",o:["1939","1941","1936","1945"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué científico fue apodado 'el sabio de Ulm'?",o:["Albert Einstein","Max Planck","Heisenberg","Bohr"],a:0,d:3,cat:"Corona"},
+  {q:"¿Cuál es la capital de Corea del Sur?",o:["Seúl","Busan","Tokio","Osaka"],a:0,d:2,cat:"Corona"},
+  {q:"¿Qué país tiene como capital a Bogotá?",o:["Colombia","Venezuela","Ecuador","Perú"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué transbordador explotó en 1986?",o:["Challenger","Columbia","Apolo 11","Soyuz"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué cordillera cruza Sudamérica de norte a sur?",o:["Andes","Alpes","Rocosas","Apeninos"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué país tiene como capital a Varsovia?",o:["Polonia","Austria","Hungría","Chequia"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué ciudad fue sede de los JJ.OO. 1992?",o:["Barcelona","Madrid","París","Sevilla"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué volcán sepultó Pompeya?",o:["Vesubio","Etna","Stromboli","Krakatoa"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué nave llevó al hombre a la Luna?",o:["Apolo 11","Apolo 13","Sputnik","Saturno V"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué ciudad se llamó Constantinopla?",o:["Estambul","Roma","Atenas","Jerusalén"],a:0,d:3,cat:"Corona"},
+  {q:"¿Quién fue la primera mujer en ganar un Nobel?",o:["Marie Curie","Lise Meitner","Rosalind Franklin","Rita Levi-Montalcini"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué país declaró su independencia en 1810?",o:["Argentina","México","Chile","Colombia"],a:0,d:3,cat:"Corona"},
+  {q:"¿Qué mar separa África de Europa al oeste del Mediterráneo?",o:["Mar de Alborán","Mar Negro","Mar Rojo","Mar Báltico"],a:0,d:3,cat:"Corona"},
+
+  // ===== Nivel 4 (16) =====
+  {q:"¿Quién inventó la imprenta de tipos móviles en Europa?",o:["Gutenberg","Tesla","Edison","Franklin"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué pueblo talló las cabezas moái?",o:["Rapa Nui","Mapuche","Moche","Nazca"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué ciudad fue capital del Imperio Romano?",o:["Atenas","Roma","Constantinopla","Cartago"],a:1,d:3,cat:"Corona"},
+  {q:"¿En qué país está Petra?",o:["Jordania","Egipto","Israel","Siria"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué filósofo fue maestro de Platón?",o:["Sócrates","Aristóteles","Tales","Heráclito"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué científico ganó el Nobel por la penicilina?",o:["Fleming","Pasteur","Curie","Watson"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué ciudad se llamó Bizancio?",o:["Estambul","Atenas","Roma","Alejandría"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué civilización construyó Machu Picchu?",o:["Inca","Maya","Azteca","Olmeca"],a:0,d:4,cat:"Corona"},
+  {q:"¿Quién escribió 'Rebelión en la granja'?",o:["George Orwell","Aldous Huxley","Shaw","Dickens"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué transbordador se desintegró en 2003?",o:["Columbia","Challenger","Discovery","Atlantis"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué ciudad fue sede de los JJ.OO. 2008?",o:["Pekín","Atenas","Londres","Tokio"],a:0,d:4,cat:"Corona"},
+  {q:"¿Quién escribió 'La República'?",o:["Platón","Aristóteles","Sócrates","Descartes"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué país africano se independizó en 1957?",o:["Ghana","Sudán","Nigeria","Etiopía"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué elemento químico tiene símbolo K?",o:["Potasio","Kriptón","Calcio","Cobalto"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué tratado puso fin a la I Guerra Mundial?",o:["Versalles","Trianón","Brest-Litovsk","Sèvres"],a:0,d:4,cat:"Corona"},
+  {q:"¿Qué lago está entre Perú y Bolivia?",o:["Titicaca","Baikal","Victoria","Tanganica"],a:0,d:4,cat:"Corona"},
+
+  // ===== Nivel 5 (16) =====
+  {q:"¿Quién formuló las leyes del movimiento?",o:["Newton","Galileo","Kepler","Descartes"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué guerra se desarrolló entre 1955 y 1975?",o:["Vietnam","Corea","Golfo","Malvinas"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué país sufrió el Holodomor?",o:["Ucrania","Rusia","Polonia","Bielorrusia"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué país lanzó la primera bomba atómica?",o:["EE.UU.","URSS","Japón","Alemania"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué físico propuso el nombre 'quark' para los quarks?",o:["Gell-Mann","Feynman","Dirac","Bohr"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué nave llegó a Marte en 1997 con el Sojourner?",o:["Pathfinder","Curiosity","Viking 1","Opportunity"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué filósofo alemán escribió 'Así habló Zaratustra'?",o:["Nietzsche","Kant","Hegel","Schopenhauer"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué país se dividió pacíficamente en 1993?",o:["Checoslovaquia","Yugoslavia","Sudán","Etiopía"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué guerra comenzó en 1914?",o:["Primera Guerra Mundial","Segunda Guerra Mundial","Guerra de Crimea","Guerra Franco-Prusiana"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué capital africana se llama Adís Abeba?",o:["Etiopía","Sudán","Kenia","Uganda"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué dinastía china dejó el Ejército de Terracota?",o:["Qin","Han","Tang","Ming"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué país tiene capital Uagadugú?",o:["Burkina Faso","Níger","Benín","Malí"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué matemáticos probaron el teorema de los cuatro colores (1976)?",o:["Appel y Haken","Wiles y Taylor","Erdős y Rényi","Perelman y Hamilton"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué reina británica fue llamada 'la reina virgen'?",o:["Isabel I","Victoria","Ana","María I"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué físico describió la inducción electromagnética?",o:["Faraday","Maxwell","Ohm","Ampère"],a:0,d:5,cat:"Corona"},
+  {q:"¿Qué astrónomo catalogó la supernova de 1572?",o:["Tycho Brahe","Kepler","Galileo","Halley"],a:0,d:5,cat:"Corona"},
+
+  // ===== Nivel 6 (16) =====
+  {q:"¿Quién propuso el modelo heliocéntrico moderno?",o:["Copérnico","Galileo","Kepler","Newton"],a:0,d:6,cat:"Corona"},
+  {q:"¿Quién desarrolló E=mc²?",o:["Einstein","Planck","Bohr","Dirac"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué año cayó Constantinopla en manos otomanas?",o:["1453","1353","1553","1653"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué filósofo escribió 'Crítica de la razón pura'?",o:["Kant","Hegel","Descartes","Leibniz"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué físico descubrió el electrón?",o:["J. J. Thomson","Rutherford","Bohr","Planck"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué ciudad fue capital del Imperio aqueménida?",o:["Persépolis","Babilonia","Susa","Ecbatana"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué sonda de la NASA orbitó Júpiter en 1995?",o:["Galileo","Voyager 1","Pioneer 10","Cassini"],a:0,d:6,cat:"Corona"},
+  {q:"¿Quién escribió 'Crimen y castigo'?",o:["Dostoievski","Tolstói","Chéjov","Gógol"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué batalla de 490 a.C. enfrentó a atenienses y persas?",o:["Maratón","Termópilas","Salamina","Plateas"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué lengua originó el alfabeto cirílico?",o:["Griego","Latín","Arameo","Copto"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué explorador cruzó el paso del Noroeste en 1906?",o:["Roald Amundsen","Robert Peary","Ernest Shackleton","Scott"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué matemático introdujo el símbolo ∫ para integrales?",o:["Leibniz","Newton","Euler","Bernoulli"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué tratado dividió el mundo entre España y Portugal en 1494?",o:["Tordesillas","Utrecht","Zaragoza","Westfalia"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué cultura mesoamericana planificó Teotihuacán?",o:["Se desconoce con certeza","Mexica","Olmeca","Tolteca"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué capital asiática está a orillas del río Han?",o:["Seúl","Pionyang","Pekín","Tokio"],a:0,d:6,cat:"Corona"},
+  {q:"¿Qué filósofo escribió 'Tractatus Logico-Philosophicus'?",o:["Wittgenstein","Russell","Frege","Carnap"],a:0,d:6,cat:"Corona"},
+
+]
+// === Usa tu QUESTIONS plano y arma BANK_BY_CAT automáticamente ===
+// Ejemplo de item: { q:"¿Qué río cruza Londres?", o:["Támesis","Danubio","Sena","Elba"], a:0, d:3, cat:"Geografía" }
+
+function normCat(s){
+  return (s||'')
+    .toString()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')   // saca acentos
+    .trim().toLowerCase();
+}
+function toIdCat(cat){
+  const t = normCat(cat);
+  if (t.includes('geograf')) return 'geografia';
+  if (t.includes('entreten')) return 'entretenimiento';
+  if (t.includes('ciencia'))  return 'ciencia';
+  if (t.includes('historia')) return 'historia';
+  if (t.includes('arte'))     return 'arte';
+  if (t.includes('deporte'))  return 'deportes';
+  if (t.includes('corona'))   return 'corona';
+  return t || 'otros';
+}
+
+// Construye BANK_BY_CAT a partir de tu QUESTIONS
+window.BANK_BY_CAT = QUESTIONS.reduce((acc, it) => {
+  const id = toIdCat(it.cat);
+  if (!acc[id]) acc[id] = [];
+  acc[id].push({
+    q: it.q,              // texto pregunta
+    o: it.o,              // opciones
+    a: (it.a|0),          // índice correcto
+    d: it.d || 1          // dificultad 1..6
+  });
+  return acc;
+}, { ciencia:[], deportes:[], historia:[], arte:[], entretenimiento:[], geografia:[], corona:[] });
+
+// Estructuras internas
+const QPOOL = {};     // cat -> [{q, options, correctHash, d}]
+const QIDX  = {};     // cat -> d -> { order:[idx], ptr:number }
+const USED  = new Set();
+
+function shuffle(arr){
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = (Math.random() * (i+1)) | 0;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+// PREP: arma hashes y grupos por dificultad desde BANK_BY_CAT
+async function prepareBank(){
+  const BANK = window.BANK_BY_CAT || {};
+  for (const cat of Object.keys(BANK)) {
+    QPOOL[cat] = [];
+    for (const item of BANK[cat]) {
+      const hash = await sha256(item.o[item.a]);
+      QPOOL[cat].push({ q: item.q, options: item.o, correctHash: hash, d: item.d || 1 });
+    }
+    QIDX[cat] = {};
+    for (let d = 1; d <= 6; d++) {
+      const idxs = [];
+      QPOOL[cat].forEach((q,i)=>{ if(q.d===d) idxs.push(i); });
+      shuffle(idxs);
+      QIDX[cat][d] = { order: idxs, ptr: 0 };
+    }
+  }
+}
+
+// Siguiente de un grupo (cat,d) evitando repetidos globales
+function nextFromGroup(cat, d){
+  const g = QIDX[cat] && QIDX[cat][d];
+  if (!g || !g.order.length) return null;
+  for (let tries=0; tries<g.order.length; tries++){
+    if (g.ptr >= g.order.length){ shuffle(g.order); g.ptr=0; }
+    const idx = g.order[g.ptr++];
+    const q = QPOOL[cat][idx];
+    const key = q.correctHash + '|' + q.q;
+    if (!USED.has(key)){ USED.add(key); return q; }
+  }
+  return null;
+}
+
+function allowedDiffSet(){
+  switch (state.crowns) {
+    case 0:  return new Set([1]);
+    case 1:  return new Set([1,2]);
+    case 2:  return new Set([3]);
+    case 3:  return new Set([4,5]);
+    case 4:  return new Set([5]);
+    case 5:  return new Set([6]);
+    default: return new Set([1]);
+  }
+}
+
+function pickQuestion(){
+  const catKey = state.currentCategory?.id;
+  if (!catKey) return null;
+
+  const allowed = allowedDiffSet();
+
+  if (catKey === 'corona'){
+    return nextFromGroup('corona', 3) || nextFromGroup('corona', 2) || nextFromGroup('corona', 1);
+  }
+
+  const groups=[];
+  for (const d of allowed){
+    const g=QIDX[catKey][d];
+    if(g && g.order.length) groups.push({c:catKey,d});
+  }
+  if(!groups.length){
+    for (let d=1; d<=6; d++){
+      const g=QIDX[catKey][d];
+      if(g && g.order.length){ groups.push({c:catKey,d}); break; }
+    }
+  }
+  if(!groups.length) return null;
+  const pick=groups[(Math.random()*groups.length)|0];
+  return nextFromGroup(pick.c, pick.d);
+}
+
+/* ===================== PREGUNTA / RESPUESTA ===================== */
+function showQuestion(){
+  const q = pickQuestion(); 
+  if (!q){ 
+    setStage('wheel'); 
+    alert('No hay preguntas cargadas en esta categoría.');
+    return; 
+  }
+  state.currentQuestion = q;
+  state.answering = true;
+  state.timeLeft = TIME_LIMIT_SEC;
+
+  qText.textContent = q.q;
+  opts.innerHTML = '';
+
+  const shuffled = q.options.slice();
+  shuffle(shuffled);
+
+  shuffled.forEach(opt=>{
+    const b=document.createElement('button');
+    b.className='opt';
+    b.textContent=opt;
+    b.onclick=()=>answer(opt,b);
+    opts.appendChild(b);
+  });
+
+  qTime.textContent = state.timeLeft;
+  tbar.style.width = '100%';
+  setStage('question');
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(state.timer);
+  state.timer=setInterval(()=>{
+    state.timeLeft--;
+    qTime.textContent=state.timeLeft;
+    tbar.style.width=(state.timeLeft/TIME_LIMIT_SEC*100)+'%';
+    if(state.timeLeft<=0){ clearInterval(state.timer); lockOptions(); lose('Se acabó el tiempo.'); }
+  },1000);
+}
+function lockOptions(){ [...opts.children].forEach(b=>b.disabled=true); }
+
+async function answer(text,btn){
+  if(!state.answering) return;
+  state.answering=false; clearInterval(state.timer);
+  const ok=(await sha256(text))===state.currentQuestion.correctHash;
+  lockOptions();
+  if(ok){
+    btn.classList.add('correct'); onCorrect();
+  }else{
+    btn.classList.add('wrong');
+    setTimeout(()=>lose('Respuesta incorrecta.'),1200);
+  }
+}
+
+function onCorrect(){
+  state.askedTotal++;
+  clearInterval(state.timer);
+
+  if (state.currentCategory?.id === 'corona') {
+    setSteps(3);
+    btnContinue.classList.add('hidden');
+    btnSpin.disabled = false;
+    setTimeout(() => onCrownEarned(), 300);
+    return;
+  }
+
+  const next = Math.min(3, state.steps + 1);
+  setSteps(next);
+
+  if (next >= 3) {
+    btnContinue.classList.add('hidden');
+    setTimeout(() => onCrownEarned(), 300);
+  } else {
+    btnContinue.textContent='Continuar';
+    btnContinue.classList.remove('hidden');
+    btnContinue.onclick = afterQuestionContinue;
+  }
+}
+
+function afterQuestionContinue(){
+  btnContinue.classList.add('hidden');
+  if (state.steps >= 3) {
+    onCrownEarned();
+  } else {
+    showModal('¡Bien!', `Vas <b>${state.steps}/3</b> hacia tu coronita.`, 'Girar', '')
+      .then(()=>{ setStage('wheel'); btnSpin.disabled=false; });
+  }
+}
+
+/* ===================== CONFETTI ===================== */
+let confettiCanvas = $('#confetti'), cctx = confettiCanvas.getContext('2d');
+function resizeConfetti(){ confettiCanvas.width=window.innerWidth; confettiCanvas.height=window.innerHeight; }
+window.addEventListener('resize', resizeConfetti); resizeConfetti();
+
+function launchConfetti(durationMs=3500, count=220){
+  const colors=['#FFD34A','#23C55E','#73A7FF','#FF7BB3','#52E0C4','#C9B0FF','#FFB25E'];
+  const parts=[];
+  for(let i=0;i<count;i++){
+    parts.push({ x:Math.random()*confettiCanvas.width, y:-20 - Math.random()*confettiCanvas.height*0.3,
+      vx:(Math.random()-0.5)*4, vy:2+Math.random()*4, s:4+Math.random()*6,
+      a:Math.random()*Math.PI, va:(Math.random()-0.5)*0.4, col:colors[(Math.random()*colors.length)|0] });
+  }
+  const t0=performance.now();
+  (function anim(t){
+    cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+    parts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.a+=p.va;
+      if(p.y>confettiCanvas.height+20){ p.y=-20; p.x=Math.random()*confettiCanvas.width; }
+      cctx.save(); cctx.translate(p.x,p.y); cctx.rotate(p.a);
+      cctx.fillStyle=p.col; cctx.fillRect(-p.s/2,-p.s/2,p.s,p.s); cctx.restore();
+    });
+    if(t-t0<durationMs) requestAnimationFrame(anim);
+    else cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+  })(t0);
+}
+
+/* ===================== FIN / CASHOUT (sin WhatsApp) ===================== */
+function showEndBanner(amount, type='chips', pct=null){
+  const container = endBanner;
+  container.innerHTML = `
+    <div class="pill" style="font-size:16px">
+      🎉 <b>¡Felicidades!</b> ${state.user ? `<b>${state.user}</b>` : ''} —
+      ${type === 'chips' ? `Premio: <b>${money(amount)}</b>` : `Bonificación: <b>${pct}%</b>`}
+    </div>
+  `;
+  container.classList.remove('hidden');
+}
+
+function cashoutChoice(basePrize){
+  const pct = Math.round(bonusPct()*100);
+
+  // contenido del modal (sin botón "Seguir jugando")
+  const html = `
+    <div class="choice-grid">
+      <div class="choice-card">
+        <h3 class="choice-title">Fichas gratis</h3>
+        <div class="choice-value">${money(basePrize)}</div>
+        <button class="choice-btn" id="chooseChips">Elegir fichas</button>
+      </div>
+      <div class="choice-card">
+        <h3 class="choice-title">Bonificación</h3>
+        <div class="choice-value">${pct}%</div>
+        <button class="choice-btn" id="chooseBonus">Elegir bonificación</button>
+      </div>
+    </div>
+  `;
+
+  openRawModal('Elegí tu premio', html);
+
+  // listeners
+  setTimeout(()=>{
+    document.getElementById('chooseChips')?.addEventListener('click', ()=>{
+      modal.classList.add('hidden');
+      document.querySelector('#modal .mfoot').style.display = ''; // restauro por si se usa luego
+      finalizeChoice('chips', Math.min(basePrize, MAX_PRIZE_CAP));
+    });
+    document.getElementById('chooseBonus')?.addEventListener('click', ()=>{
+      modal.classList.add('hidden');
+      document.querySelector('#modal .mfoot').style.display = '';
+      finalizeChoice('bonus', pct);
+    });
+  }, 0);
+}
+
+function onCrownEarned(){
+  state.crowns++;
+  setSteps(0);
+  renderCrowns();
+  setPrize();
+
+  const currentPrize = prizeFor(state.crowns);
+  if (state.crowns >= MAX_CROWNS || currentPrize >= MAX_PRIZE_CAP) {
+    cashoutChoice(Math.min(currentPrize, MAX_PRIZE_CAP));
+    return;
+  }
+  showModal(
+    '¡Felicidades, ganaste una coronita!',
+    `Tu premio acumulado ahora es de <b>${money(currentPrize)}</b>.<br>
+     ¿Querés <b>continuar</b> o <b>retirarte</b> con lo ganado?`,
+    'Continuar',
+    'Retirarme'
+  ).then(ans=>{
+    if(ans){ setStage('wheel'); }
+    else { cashoutChoice(currentPrize); }
+  });
+}
+
+function lose(msg='Respuesta incorrecta.'){
+  state.gameOver=true;
+  setStage('wheel');
+  btnSpin.disabled=true; btnBegin.disabled=true;
+
+  endBanner.innerHTML = `
+    <div class="pill" style="font-size:16px">
+      😅 ${msg} Al menos ganaste <b>${money(BASE_PRIZE)}</b> por participar.
+    </div>`;
+  endBanner.classList.remove('hidden');
+
+  // Reporte simple de "participación"
+  try{ window.__reportPrize && window.__reportPrize(BASE_PRIZE, 'participación'); }catch(e){}
+}
+
+function finalizeChoice(type, value){
+  launchConfetti(4200,260);
+  setStage('wheel');
+  state.gameOver=true; btnSpin.disabled=true; btnBegin.disabled=true;
+
+  if(type==='chips'){
+    showEndBanner(value,'chips');
+    try{ window.__reportPrize && window.__reportPrize(value, 'chips'); }catch(e){}
+  }else{
+    showEndBanner(null,'bonus', value);
+    try{ window.__reportPrize && window.__reportPrize(0, `bonus ${value}%`); }catch(e){}
+  }
+  setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),50);
+}
+
+/* ===================== ARRANQUE (sin login/bloqueos) ===================== */
+function setUserFromQuery(){
+  const u = new URLSearchParams(location.search).get('user') || localStorage.getItem('gen_user') || 'Jugador';
+  state.user = u;
+  try{ localStorage.setItem('gen_user', u); }catch(e){}
+  userClock.textContent = `${state.user} · ${new Date().toLocaleString('es-AR',{hour12:false})}`;
+}
+
+// Sin pantalla de inicio; juego visible desde el arranque
+document.addEventListener('DOMContentLoaded', async ()=>{
+  setUserFromQuery();
+  drawWheel();
+  renderCrowns();
+  setPrize();
+  await prepareBank();
+
+  // habilitar botón girar
+  btnSpin.disabled = false;
+
+  // Exponer reporter para el panel
+  window.__reportPrize = function(value,label){
+    try{
+      parent && parent.postMessage({
+        type:'prize',
+        user: state.user || 'Jugador',
+        game: 'trivia',
+        value: (value|0),
+        label: label || 'auto'
+      }, '*');
+    }catch(e){}
+  };
+});
+
+/* ===================== EVENTOS UI ===================== */
+btnSpin.addEventListener('click', ()=>{ if(!btnSpin.disabled) spinWheel(); });
+btnBegin.addEventListener('click', ()=>{
+  const cat=state.currentCategory; if(!cat) return;
+  qDot.style.background = cat.color;
+  qCat.textContent = (cat.id==='corona'?'Corona':cat.name);
+  setStage('question');
+  showQuestion();
+});
+  </script>
+</body>
+</html>

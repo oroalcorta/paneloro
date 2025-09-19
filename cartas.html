@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Cartas · Red Oro</title>
+<style>
+:root{--bg:#0b0b0f;--card:#151520;--mut:#9da3af;--acc:#7DF9FF;--line:#ffffff1a}
+*{box-sizing:border-box}
+body{margin:0;background:
+  radial-gradient(circle at 20% 20%, #ffffff11 1%, transparent 2%),
+  radial-gradient(circle at 40% 80%, #ffffff11 1%, transparent 2%),
+  radial-gradient(circle at 80% 30%, #ffffff11 1%, transparent 2%),
+  radial-gradient(circle at 70% 60%, #ffffff11 1%, transparent 2%),
+  radial-gradient(circle at 50% 50%, #ffffff22 1%, transparent 2%),
+  #000;
+  color:#e0e0e0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Inter,sans-serif}
+.wrap{max-width:520px;margin:0 auto;padding:16px 14px 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+h1{margin:6px 0 8px 0;font-size:22px;text-align:center;color:var(--acc);text-shadow:0 0 10px var(--acc)}
+.top{margin:6px 0 10px;text-align:center;color:#cfd3dc;font-size:12px}
+.prize-list{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0 14px}
+.prize-item{display:flex;flex-direction:column;align-items:center;justify-content:center;height:74px;
+  background:#0b0f1a;border:2px solid var(--acc);border-radius:12px;font-size:14px;color:#fff}
+.premio-box{background:#fff;color:#000;padding:2px 6px;border-radius:6px;font-size:10px;font-weight:800;text-align:center}
+.grid-wrap{padding:10px;border:2px solid var(--acc);border-radius:12px}
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.carta{width:60px;height:80px;border-radius:10px;perspective:1000px;cursor:pointer}
+.inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 0.8s}
+.carta.flipped .inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  backface-visibility:hidden;border-radius:10px;font-weight:800}
+.front{background:#7DF9FF;color:#111}
+.back{transform:rotateY(180deg);background:#1a1a2e;color:#fff;flex-direction:column;text-align:center}
+#result{margin-top:10px;color:#111;background:#7DF9FF;border:2px solid #8A2BE2;border-radius:10px;
+  padding:10px 14px;font-weight:800;text-align:center}
+.tip{margin-top:8px;font-size:10px;text-align:center;letter-spacing:.3px}
+.disabled{opacity:.45;pointer-events:none;filter:grayscale(100%)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>CASINO ORO · CARTAS</h1>
+    <div class="top">🎯 Destapá cartas… si hacés <b>3 iguales</b>, ganás.</div>
+
+    <h4 style="margin:6px 0 4px;text-align:center">🎁 Premios posibles</h4>
+    <div class="prize-list">
+      <div class="prize-item" style="background:#0aa249">🪐 <span class="premio-box">2.500 GRATIS</span></div>
+      <div class="prize-item" style="background:#FF1493">🌠 <span class="premio-box">100% BONO</span></div>
+      <div class="prize-item" style="background:#FF8C00">🛰️ <span class="premio-box">50% BONO</span></div>
+      <div class="prize-item" style="background:#DC143C">🌌 <span class="premio-box">20% BONO</span></div>
+      <div class="prize-item" style="background:#1E90FF">💎 <span class="premio-box">10.000 GRATIS</span></div>
+      <div class="prize-item" style="background:#BA55D3">☄️ <span class="premio-box">5.000 GRATIS</span></div>
+      <div class="prize-item" style="background:#FFD700">👾 <span class="premio-box">500.000 GRATIS</span></div>
+      <div class="prize-item" style="background:#2F4F4F">👽 <span class="premio-box">100.000 GRATIS</span></div>
+    </div>
+
+    <div class="grid-wrap"><div id="grid" class="grid"></div></div>
+    <div id="result" style="display:none"></div>
+    <div class="tip">📲 Sacá captura y reclamá tu premio por WhatsApp.</div>
+  </div>
+</div>
+
+<script>
+const USER = new URLSearchParams(location.search).get('user') || '';
+
+const POOL = [
+  { nombre:'2.500 GRATIS', emoji:'🪐', fondo:'#0aa249', value:2500,  cantidad:4 },
+  { nombre:'100% BONO',   emoji:'🌠', fondo:'#FF1493', value:0,     cantidad:3 },
+  { nombre:'50% BONO',    emoji:'🛰️', fondo:'#FF8C00', value:0,     cantidad:3 },
+  { nombre:'20% BONO',    emoji:'🌌', fondo:'#DC143C', value:0,     cantidad:4 },
+  { nombre:'10.000 GRATIS',emoji:'💎', fondo:'#1E90FF', value:10000, cantidad:3 },
+  { nombre:'5.000 GRATIS', emoji:'☄️', fondo:'#BA55D3', value:5000,  cantidad:3 },
+  { nombre:'500.000 GRATIS',emoji:'👾', fondo:'#FFD700', value:0,   cantidad:2 },
+  { nombre:'100.000 GRATIS',emoji:'👽', fondo:'#2F4F4F', value:100000, cantidad:2 }
+];
+
+const grid = document.getElementById('grid');
+const resultEl = document.getElementById('result');
+let opened = [];
+let finished = false;
+
+function buildDeck(){
+  const deck=[];
+  POOL.forEach(p=>{ for(let i=0;i<p.cantidad;i++) deck.push({...p}); });
+  deck.sort(()=>Math.random()-0.5);
+  return deck;
+}
+
+function render(){
+  grid.innerHTML='';
+  resultEl.style.display='none';
+  opened=[]; finished=false;
+
+  const deck = buildDeck();
+  deck.forEach(card=>{
+    const c = document.createElement('div'); c.className='carta';
+    c.dataset.tipo=card.nombre; c.dataset.emoji=card.emoji; c.dataset.color=card.fondo; c.dataset.value=card.value;
+    c.addEventListener('click', ()=>flip(c));
+
+    const inner=document.createElement('div'); inner.className='inner';
+    const front=document.createElement('div'); front.className='face front'; front.innerHTML='🚀';
+    const back=document.createElement('div'); back.className='face back';
+    back.innerHTML = `<div style="font-size:20px;margin-bottom:3px">${card.emoji}</div><div class="premio-box">${card.nombre}</div>`;
+    back.style.background=card.fondo;
+
+    inner.appendChild(front); inner.appendChild(back); c.appendChild(inner);
+    grid.appendChild(c);
+  });
+}
+
+function flip(c){
+  if(finished || c.classList.contains('flipped')) return;
+  c.classList.add('flipped');
+
+  const tipo=c.dataset.tipo;
+  opened.push(tipo);
+
+  const count = opened.reduce((m,t)=>((m[t]=1+(m[t]||0)),m),{});
+  if(count[tipo]===3 && !finished){
+    finished=true;
+    document.querySelectorAll('.carta').forEach(x=>x.classList.add('disabled'));
+    const label = `${tipo}`;
+    const value = parseInt(c.dataset.value||'0',10);
+    resultEl.textContent = `🎉 ¡Ganaste ${label}!`; resultEl.style.display='block';
+    try{
+      window.parent && window.parent.postMessage({
+        type:'prize', game:'cartas', user:USER, label, value
+      }, '*');
+    }catch(e){}
+  }
+}
+
+render();
+</script>
+</body>
+</html>
