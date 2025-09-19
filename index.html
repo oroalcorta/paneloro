@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <base href="./">
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
   // === SUPABASE CONFIG ===
@@ -885,7 +886,7 @@ if ((rec.shots || 0) < 1)    return showDialog('No tenés tiros cargados.');
     const iframe = qs('#iframeGame');
     const sep = g.url.includes('?') ? '&' : '?';
     iframe.removeAttribute('srcdoc');
-    iframe.src = g.url + sep + 'free=1&user=' + encodeURIComponent(username);
+    iframe.src = g.url + sep + 'free=1&user=' + encodeURIComponent(username) + '&v=' + Date.now();
     qs('#gameFrame').classList.add('show');
 
     // descuenta 1 cuando el juego cargó (una única vez)
