@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  
   <script>
 // Prefijo dinámico: en GitHub usa /paneloro/, en local usa ./
-const PREFIX = location.hostname.endsWith('github.io') ? '/paneloro/' : './';
+const IS_GH = location.hostname.endsWith('github.io');
+const ROOT  = IS_GH ? '/paneloro/' : './';
+
+// SIEMPRE construir la URL desde el slug (no guardamos url en state)
+const gameUrl = (slug) => `${ROOT}${slug}.html`;
 </script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
@@ -347,7 +352,7 @@ localStorage.setItem('last_brand', BRAND);
 // aplica estilos por brand en el CSS
 document.body.dataset.brand = BRAND;
 localStorage.setItem('last_brand', BRAND);
-const LS_KEY = `panel_${BRAND}_v5`;
+const LS_KEY = `panel_${BRAND}_v6`;
 
 // ===== DEBUG =====
 const DEBUG = new URLSearchParams(location.search).get('debug') === '1';
@@ -459,13 +464,13 @@ async function sbRefreshUser(username){
 
 const DEFAULT_STATE = {
   games: [
-    {slug:'ruleta', icon:'🎯',  name:'Ruleta',         url: PREFIX + 'ruleta.html'},
-    {slug:'globo',  icon:'🎈',  name:'Globo',          url: PREFIX + 'globo.html'},
-    {slug:'minas',  icon:'💣',  name:'Minas',          url: PREFIX + 'minas.html'},
-    {slug:'dados',  icon:'🎲',  name:'Dados',          url: PREFIX + 'dados.html'},
-    {slug:'trivia', icon:'❓',  name:'Trivia',         url: PREFIX + 'trivia.html'},
-    {slug:'cartas', icon:'🃏',  name:'Cartas',         url: PREFIX + 'cartas.html'},
-    {slug:'mom',    icon:'↕️',  name:'Mayor o Menor',  url: PREFIX + 'mom.html'}
+    { slug:'ruleta', icon:'🎯', name:'Ruleta'        },
+    { slug:'globo',  icon:'🎈', name:'Globo'         },
+    { slug:'minas',  icon:'💣', name:'Minas'         },
+    { slug:'dados',  icon:'🎲', name:'Dados'         },
+    { slug:'trivia', icon:'❓', name:'Trivia'        },
+    { slug:'cartas', icon:'🃏', name:'Cartas'        },
+    { slug:'mom',    icon:'↕️', name:'Mayor o Menor' }
   ],
   users: { 'demo': { password:'demo', blocked:false, shots:3, history:[] } },
   sessions: { currentUser: null },
@@ -475,6 +480,18 @@ const DEFAULT_STATE = {
 function R(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||'null')||DEFAULT_STATE }catch(e){ return DEFAULT_STATE } }
 function W(s){ localStorage.setItem(LS_KEY, JSON.stringify(s)) }
 let state = R();
+
+// 🔒 Lista canónica de juegos (evita rutas viejas del localStorage)
+const CANON_GAMES = [
+  { slug:'ruleta', icon:'🎯', name:'Ruleta'        },
+  { slug:'globo',  icon:'🎈', name:'Globo'         },
+  { slug:'minas',  icon:'💣', name:'Minas'         },
+  { slug:'dados',  icon:'🎲', name:'Dados'         },
+  { slug:'trivia', icon:'❓', name:'Trivia'        },
+  { slug:'cartas', icon:'🃏', name:'Cartas'        },
+  { slug:'mom',    icon:'↕️', name:'Mayor o Menor' }
+];
+state.games = CANON_GAMES; // ← no guardamos url en el estado
 let userFilter = '';
 let uid2name = {};
 function cur(){ const k=state.sessions.currentUser; return k? state.users[k]:null }
@@ -808,22 +825,30 @@ qs('#btnLogin').addEventListener('click', async ()=>{
 /* ===== Dashboard (Jugador) ===== */
 function renderHeader(){ const u=cur(); qs('#shotsGeneral').textContent=(u&&u.shots)||0; }
 function renderGames(){
-  const grid=qs('#gamesGrid'); grid.innerHTML='';
+  const grid = qs('#gamesGrid');
+  grid.innerHTML = '';
+
   state.games.forEach(g=>{
-    const el=document.createElement('div'); el.className='card';
-    const disabled = !g.url;
+    const url = gameUrl(g.slug); // ← se calcula acá
+    const el  = document.createElement('div');
+    el.className = 'card';
+
     el.innerHTML =
-  '<div class="badge">'+g.slug+'</div>'+
-  '<div class="row" style="gap:12px;align-items:center">'+
-    '<div class="thumb">'+(g.icon || "🎮")+'</div>'+   // ← emoji directo
-    '<h3 style="margin:0;text-transform:uppercase">'+g.name+'</h3>'+
-  '</div>'+
-  '<div class="row">'+
-    '<button class="btn btn-primary play" data-slug="'+g.slug+'" '+(disabled?'disabled':'')+'>'+(disabled?'Falta archivo':'Jugar')+'</button>'+
-  '</div>';
+      '<div class="badge">'+g.slug+'</div>'+
+      '<div class="row" style="gap:12px;align-items:center">'+
+        '<div class="thumb">'+(g.icon || "🎮")+'</div>'+
+        '<h3 style="margin:0;text-transform:uppercase">'+g.name+'</h3>'+
+      '</div>'+
+      '<div class="row">'+
+        // no dependemos de g.url guardado
+        '<button class="btn btn-primary play" data-slug="'+g.slug+'">Jugar</button>'+
+      '</div>';
+
     grid.appendChild(el);
   });
-  grid.querySelectorAll('.play').forEach(b=>b.addEventListener('click',()=>play(b.dataset.slug)));
+
+  grid.querySelectorAll('.play')
+    .forEach(b => b.addEventListener('click', ()=> play(b.dataset.slug)));
 }
 
 let playing = false;
@@ -834,73 +859,79 @@ async function play(slug){
   if(!username) return;
 
   const g = state.games.find(x=>x.slug===slug);
-  if(!g || !g.url) return showDialog('No encontré el archivo del juego.');
+  if(!g) return showDialog('No encontré el juego.');
 
- // chequeo rápido y liviano (evita select('*'))
-const { data: rec, error: qErr } = await sb
-  .from('users')
-  .select('id, blocked, shots')
-  .eq('username', username)
-  .eq('brand', BRAND)
-  .maybeSingle();
+  console.log('[PLAY] click', { slug, PREFIX: ROOT, href: location.href });
 
-if (qErr) {
-  console.error('ERROR select users:', qErr);
-  return showDialog('Error consultando usuario: ' + (qErr.message || 'desconocido'));
-}
-if (!rec) return showDialog('Usuario inexistente.');
-if (rec.blocked)             return showDialog('Usuario bloqueado.');
-if ((rec.shots || 0) < 1)    return showDialog('No tenés tiros cargados.');
+  // 1) Chequeo de usuario/tiros
+  const { data: rec, error: qErr } = await sb
+    .from('users').select('id, blocked, shots')
+    .eq('username', username).eq('brand', BRAND).maybeSingle();
 
-  playing = true;
-  let descontado = false;    // ← garantía: solo 1 descuento
+  if (qErr){ console.error('[PLAY] users.select ERROR', qErr); return showDialog('Error consultando usuario.'); }
+  if (!rec)          return showDialog('Usuario inexistente.');
+  if (rec.blocked)   return showDialog('Usuario bloqueado.');
+  if ((rec.shots||0) < 1) return showDialog('No tenés tiros cargados.');
 
-  const descontarUno = async () => {
+  // 2) Verificar que el archivo del juego exista
+  const url = gameUrl(slug);
+  try{
+    const head = await fetch(url, { method:'HEAD', cache:'no-store' });
+    console.log('[PLAY] HEAD', url, head.status, head.statusText);
+    if (!head.ok){
+      showDialog(`No encuentro ${url} (HTTP ${head.status}). Subilo a la raíz del repo con ese nombre.`);
+      return;
+    }
+  }catch(e){
+    console.error('[PLAY] HEAD throw', e);
+    showDialog('No se pudo verificar el archivo del juego.');
+    return;
+  }
+
+  // 3) Descuenta 1 tiro (garantía: solo 1 vez)
+  let descontado = false;
+  const descontarUno = async ()=>{
     if (descontado) return;
     descontado = true;
     try{
       const { data, error } = await sb.rpc('play_and_refresh', {
-  p_username: username,
-  p_game_slug: slug,
-  p_brand: BRAND,   // "oro"
-});
+        p_username: username, p_game_slug: slug, p_brand: BRAND
+      });
+      console.log('[PLAY] RPC play_and_refresh', { data, error });
       if (error){
         const msg = String(error.message||'');
-        if (msg.includes('NO_SHOTS'))      return showDialog('No tenés tiros cargados.');
+        if (msg.includes('NO_SHOTS'))       return showDialog('No tenés tiros cargados.');
         if (msg.includes('USER_NOT_FOUND')) return showDialog('Usuario inexistente.');
         if (msg.includes('USER_BLOCKED'))   return showDialog('Usuario bloqueado.');
-        console.error(error); return showDialog('Error al iniciar el juego.');
+        return showDialog('Error al iniciar el juego.');
       }
       const newShots = data?.[0]?.shots ?? null;
       if (newShots != null){
         state.users[username] = { ...(state.users[username]||{}), shots: newShots };
-        W(state);
-        renderHeader(); // ← se ve al toque (3 → 2)
+        W(state); renderHeader();
       }
     }catch(e){
-      console.error(e);
+      console.error('[PLAY] RPC throw', e);
       showDialog('Error al descontar el tiro.');
     }
   };
 
+  // 4) Abrir iframe
+  playing = true;
   try{
-    // abrir juego
-    qs('#gfTitle').textContent = g.name;
     const iframe = qs('#iframeGame');
-    const sep = g.url.includes('?') ? '&' : '?';
+    const sep = url.includes('?') ? '&' : '?';
+    const src = url + sep + 'free=1&user=' + encodeURIComponent(username) + '&v=' + Date.now();
+    console.log('[PLAY] IFRAME src ->', src);
+
     iframe.removeAttribute('srcdoc');
-    iframe.src = g.url + sep + 'free=1&user=' + encodeURIComponent(username) + '&v=' + Date.now();
+    iframe.src = src;
+    qs('#gfTitle').textContent = g.name;
     qs('#gameFrame').classList.add('show');
 
-    // descuenta 1 cuando el juego cargó (una única vez)
-    const onLoad = () => descontarUno();
-    iframe.addEventListener('load', onLoad, { once:true });
-
-    // fallback por si 'load' no dispara en el juego (una sola vez)
-    setTimeout(() => descontarUno(), 1200);
-
+    iframe.addEventListener('load', ()=>{ console.log('[PLAY] IFRAME load OK'); descontarUno(); }, { once:true });
+    setTimeout(()=>{ console.log('[PLAY] load fallback -> descontar'); descontarUno(); }, 1200);
   } finally {
-    // permití volver a hacer click cuando ya está el juego abierto
     playing = false;
   }
 }
